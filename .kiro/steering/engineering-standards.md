@@ -66,3 +66,13 @@ When writing or reviewing code for the TitanOps platform, follow these standards
 - Graceful shutdown within 30 seconds
 - README.md, CHANGELOG.md
 - No `golangci-lint` warnings
+
+### Architecture Patterns (from AOSA Books: nginx, ZeroMQ, LLVM, Berkeley DB)
+
+- **Pipeline-first**: Model all data flow as explicit pipelines with typed handoff points. The protobuf Event schema is the intermediate representation between all stages.
+- **Lock-free hot path**: No mutexes between eBPF event read and action execution. Use atomics, lock-free ring buffers, and per-worker sharding.
+- **Batch at boundaries**: Accumulate events internally, flush in batches to export backends (default batch size 100, flush interval 1s). Serialize once per batch.
+- **Zero-copy internally**: Pass Go struct pointers through pipeline stages. Serialize (protobuf/JSON) only at system boundaries (event bus wire, export output, API response).
+- **Graceful config reload**: Support config changes without pod restart. Store config in `atomic.Value`, reject invalid config, keep running with previous valid config.
+- **Idempotent exports**: Every event has a unique `event_id` (UUID v4). Retry logic never modifies payload. Backends can deduplicate by event_id.
+- **Worker-per-core**: Fixed worker pool = `runtime.NumCPU()`. Route events by affinity (same node → same worker). Each worker owns its state, no shared mutable data.

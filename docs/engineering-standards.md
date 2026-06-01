@@ -521,6 +521,176 @@ eventBus.Close()
 
 ---
 
+## 15. Architecture Patterns (from AOSA Books)
+
+These patterns are derived from studying the architecture of nginx, ZeroMQ, Berkeley DB, LLVM, and other systems documented in [The Architecture of Open Source Applications](https://aosabook.org/en/).
+
+### Pipeline-First Architecture (from nginx, LLVM)
+
+All data flow is modeled as explicit pipelines with typed handoff points:
+
+```
+eBPF Event → Decode → AI Inference → Decision → Action → Event Emit → Export
+```
+
+**Rules:**
+- Each pipeline stage has a single responsibility
+- Stages communicate through well-defined typed interfaces (protobuf Event is the IR)
+- Stages are independent and composable — adding a new export backend requires zero changes to existing stages
+- Pipeline stages can be reordered or bypassed via configuration
+- The intermediate representation (Event schema) is the contract between producers and consumers
+
+### Lock-Free Hot Path (from ZeroMQ, nginx)
+
+The hot path (eBPF event → inference → action) must never contend on locks:
+
+```go
+// Good: lock-free ring buffer for event passing
+type EventRing struct {
+    buf  [capacity]Event
+    head atomic.Uint64
+    tail atomic.Uint64
+}
+
+// Bad: mutex-protected queue
+type EventQueue struct {
+    mu    sync.Mutex
+    items []Event
+}
+```
+
+**Rules:**
+- Use `atomic` operations and lock-free data structures on the hot path
+- No `sync.Mutex` between eBPF event read and action execution
+- Worker goroutines own their data — no shared mutable state
+- Use channels only for signaling, not for high-throughput data passing
+- If you must synchronize, use per-worker sharding (one ring buffer per module)
+
+### Batch at Boundaries (from ZeroMQ, nginx)
+
+Accumulate work internally, flush in batches at system boundaries:
+
+```go
+// Good: batch events before sending to backend
+func (e *Exporter) flushBatch(ctx context.Context) error {
+    batch := e.buffer.DrainUpTo(100)
+    return e.backend.SendBatch(ctx, batch)
+}
+
+// Bad: send one event at a time
+func (e *Exporter) export(ctx context.Context, event Event) error {
+    return e.backend.Send(ctx, event)
+}
+```
+
+**Rules:**
+- Export adapters batch events (configurable batch size, default 100, flush interval 1s)
+- Correlation engine processes events in micro-batches from the ring buffer
+- Dashboard API aggregates state updates and pushes to clients at fixed intervals (not per-event)
+- Protobuf serialization happens once per batch, not once per event
+
+### Zero-Copy Internally (from ZeroMQ, nginx)
+
+Pass pointers through the pipeline, serialize only at export boundaries:
+
+```go
+// Good: pass pointer through pipeline stages
+func (c *CorrelationEngine) processEvent(event *Event) {
+    // event is a pointer — no copy, no serialization
+    c.matcher.Match(event)
+}
+
+// Bad: serialize/deserialize at every stage
+func (c *CorrelationEngine) processEvent(data []byte) {
+    event := &Event{}
+    proto.Unmarshal(data, event) // unnecessary deserialization
+    c.matcher.Match(event)
+}
+```
+
+**Rules:**
+- Events are deserialized once (at the event bus ingestion point)
+- All internal pipeline stages work with Go struct pointers
+- Serialization (protobuf/JSON) happens only at system boundaries: event bus wire format, export adapter output, dashboard API response
+- Use `sync.Pool` for frequently allocated event structs to reduce GC pressure
+
+### Graceful Config Reload (from nginx)
+
+Support configuration changes without pod restart:
+
+```go
+// Watch for ConfigMap changes and reload
+func (m *Module) watchConfig(ctx context.Context) {
+    watcher := m.configWatcher.Watch(ctx)
+    for update := range watcher {
+        newConfig, errs := config.Load(update)
+        if len(errs) > 0 {
+            log.Warn("config reload failed, keeping current", "errors", errs)
+            continue
+        }
+        m.config.Store(newConfig) // atomic swap
+        log.Info("config reloaded successfully")
+    }
+}
+```
+
+**Rules:**
+- Configuration is stored in an `atomic.Value` or similar lock-free container
+- Config reload never interrupts in-flight event processing
+- Invalid new config is rejected — the module keeps running with the previous valid config
+- Log config reload events (success and failure) for auditability
+- Export backend changes (add/remove backends) take effect without restart
+
+### Idempotent Exports (from Scalable Web Architecture)
+
+Every export operation must be safe to retry:
+
+```go
+// Good: include event_id for deduplication
+type ExportPayload struct {
+    EventID   string    // UUID — backend can deduplicate
+    Timestamp time.Time // original event time, not send time
+    Data      []byte
+}
+
+// Backend can detect and ignore duplicates via EventID
+```
+
+**Rules:**
+- Every event has a unique `event_id` (UUID v4) assigned at creation time
+- Export payloads include the event_id so backends can deduplicate
+- Retry logic never modifies the event content — same payload on every attempt
+- Timestamps reflect when the event occurred, not when it was exported
+- If a backend confirms receipt, mark the event as delivered (don't re-send)
+
+### Worker-Per-Core Model (from nginx)
+
+One worker goroutine per CPU core, handling thousands of events:
+
+```go
+// Good: fixed worker pool, events distributed by hash
+workers := make([]*Worker, runtime.NumCPU())
+for i := range workers {
+    workers[i] = NewWorker(bufferSize)
+    go workers[i].Run(ctx)
+}
+
+// Route events to workers by node hash (locality)
+func route(event *Event) *Worker {
+    hash := fnv32(event.Node)
+    return workers[hash % len(workers)]
+}
+```
+
+**Rules:**
+- Number of worker goroutines = `runtime.NumCPU()` (not one per event, not unbounded)
+- Events are routed to workers by affinity (same node → same worker) for cache locality
+- Each worker owns its state — no shared mutable data between workers
+- Workers process events in a tight loop with no blocking I/O
+- Use `runtime.LockOSThread()` only for eBPF map operations that require it
+
+---
+
 ## Summary: The Quality Bar
 
 A TitanOps component is ready for release when:
@@ -537,3 +707,6 @@ A TitanOps component is ready for release when:
 10. ✅ Documentation is complete (README, ARCHITECTURE, CHANGELOG)
 11. ✅ Configuration validates at startup with clear error messages
 12. ✅ Errors are typed, wrapped with context, and never panic
+13. ✅ Hot path is lock-free with zero allocations per event
+14. ✅ Exports are batched and idempotent
+15. ✅ Config reload works without pod restart
