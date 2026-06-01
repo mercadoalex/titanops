@@ -206,10 +206,33 @@ Correlation Engine:
 | Component | What |
 |-----------|------|
 | Shared event schema | All modules emit events with `node`, `pod`, `namespace`, `timestamp`, `severity`, `module` |
-| Event bus | Lightweight in-cluster gRPC service or shared NATS/Redis stream |
+| Event bus | NATS deployed in-cluster via Helm (lightweight, no external dependency) |
 | Correlation rules | "If A + B + C within N minutes → correlated incident" |
 | AI layer | Model trained on correlated incidents to predict attack chains |
 | Output | Correlated alerts with full narrative, sent to configured backends |
+
+### Event Bus Decision: NATS (In-Cluster via Helm)
+
+**Choice:** NATS deployed as a pod inside the EKS cluster, managed by the umbrella Helm chart.
+
+**Why NATS:**
+- Single binary, ~15MB RAM footprint — minimal resource overhead
+- Pub/sub model fits the pattern: modules publish, correlation engine subscribes
+- No external dependencies (no Zookeeper, no disk for basic mode)
+- Built-in clustering for HA
+- JetStream available if we need persistence/replay later
+- No Terraform needed — it's a Kubernetes workload, not AWS infrastructure
+
+**Why NOT a managed service (MSK, SQS, etc.):**
+- The correlation engine processes events in real-time within a 2-minute window
+- No long-term durability needed — missed events mean a missed correlation, not data loss
+- Keeps the platform self-contained (works in air-gapped environments)
+- Zero AWS cost for the event bus layer
+- Simpler operations (no cross-service IAM, no VPC endpoints)
+
+**Migration path:** If scale or compliance demands it later, swap NATS for Amazon MSK (Kafka) — the event schema (protobuf) and publish/subscribe pattern remain the same. Only the transport layer changes.
+
+**Deployment:** Part of the umbrella Helm chart at `templates/event-bus-deployment.yaml`, toggled via `eventBus.enabled` in values.yaml.
 
 ### Why This Is the Moat
 
@@ -788,3 +811,83 @@ No package registry needed. No npm publish. Just git tags. Go's module proxy (`p
 | Umbrella Helm chart | v0.1.0 | Tracks module compatibility |
 
 All components start at `v0.1.0`. The `v0.x` prefix signals: "this is under active development, APIs may change." When the platform stabilizes, individual components graduate to `v1.0.0` independently.
+
+---
+
+## Infrastructure Strategy: One Shared EKS Cluster
+
+### Decision: Single Cluster for All Modules
+
+All four TitanOps modules run on one shared EKS cluster. Separate clusters per module are rejected because:
+
+- The Correlation Engine needs sub-second access to events from all modules — cross-cluster communication adds latency and complexity
+- eBPF probes from Earthworm, Tlapix, eBeeControl, and Quack all need to run on the same kernel (same node) to observe the same workloads
+- One DaemonSet loading all eBPF programs is cheaper than four separate DaemonSets across four clusters
+- The umbrella Helm chart is designed for exactly this — one `helm install` into one cluster
+- EKS control plane cost: $0.10/hour × 1 cluster vs × 4 clusters = 75% savings on control plane alone
+
+### Cost Comparison
+
+| Approach | Control Plane | Nodes | Networking | Complexity |
+|----------|--------------|-------|------------|------------|
+| 4 separate clusters | $292/mo | 4+ nodes minimum (1 per cluster) | Cross-cluster VPC peering for correlation | High |
+| 1 shared cluster | $73/mo | 1-2 nodes (all modules share) | In-cluster gRPC, zero extra networking | Low |
+
+### Terraform Location
+
+Infrastructure lives in the `titanops` platform repo — not in individual module repos:
+
+```
+github.com/mercadoalex/titanops/
+├── infra/
+│   ├── terraform/
+│   │   ├── environments/
+│   │   │   ├── dev/
+│   │   │   │   ├── main.tf
+│   │   │   │   ├── variables.tf
+│   │   │   │   ├── outputs.tf
+│   │   │   │   └── terraform.tfvars
+│   │   │   ├── staging/
+│   │   │   └── prod/
+│   │   ├── modules/
+│   │   │   ├── eks/              # EKS cluster + node groups
+│   │   │   ├── vpc/              # VPC, subnets, security groups
+│   │   │   ├── iam/              # Shared IAM roles for all modules
+│   │   │   ├── ecr/              # Container registries (one per module)
+│   │   │   ├── s3/               # Model storage (ONNX files)
+│   │   │   └── monitoring/       # CloudWatch, Prometheus remote write
+│   │   └── backend.tf            # S3 + DynamoDB state backend
+│   └── scripts/
+│       ├── bootstrap.sh          # First-time setup
+│       └── destroy.sh            # Teardown
+```
+
+**Why in `titanops/` and not in each module repo:**
+- Infrastructure is platform-level — it serves all modules equally
+- One state file, one plan, one apply — no coordination across repos
+- Module repos stay focused on application code
+- Matches the principle: "platform-level concerns live in titanops/"
+
+### Cost Optimization Strategies
+
+| Strategy | Savings | How |
+|----------|---------|-----|
+| Spot instances for non-prod | 60-70% on compute | Node group with spot + on-demand fallback |
+| Karpenter autoscaling | Scale to zero when idle | Nodes spin down when no workload |
+| ARM instances (Graviton) | 20% cheaper than x86 | All Go binaries cross-compile trivially |
+| Fargate for Dashboard | No idle node cost | Dashboard pod runs on-demand only |
+| Single NAT Gateway | $32/mo saved per extra | One AZ for dev, multi-AZ for prod |
+
+### Environment Sizing
+
+| Environment | Nodes | Instance Type | Estimated Cost |
+|-------------|-------|---------------|----------------|
+| Dev | 1 | t3.medium (spot) | ~$100-150/mo |
+| Staging | 2 | t3.large (spot + on-demand) | ~$200-300/mo |
+| Prod | 3+ | m6g.large (Graviton, multi-AZ) | ~$400-600/mo |
+
+### Key Principle
+
+> "One cluster, one Helm install, one state file. Modules share compute, not just code."
+
+Individual module repos contain zero infrastructure code. All Terraform, all cluster config, all shared IAM — it lives in `titanops/infra/`. When you `terraform apply`, you get one EKS cluster ready for `helm install titanops`.

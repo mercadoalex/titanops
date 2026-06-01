@@ -1,0 +1,58 @@
+# ============================================================
+# TitanOps EKS Infrastructure - Terraform Variable Values
+# ============================================================
+# Copy this file to terraform.tfvars and fill in your values.
+# Do NOT commit terraform.tfvars to version control.
+# ============================================================
+
+# AWS region for deployment
+aws_region = "us-east-2"
+
+# AWS CLI profile
+aws_profile = "experiment"
+
+# Project name used for resource tagging and naming prefixes
+project_name = "titanops"
+
+# Environment name (e.g., dev, staging, prod)
+environment = "dev"
+
+# EKS cluster name - must be unique within the AWS account/region
+cluster_name = "titanops-eks"
+
+# Kubernetes version for the EKS cluster (format: MAJOR.MINOR)
+cluster_version = "1.32"
+
+# VPC CIDR block - ensure it does not overlap with existing VPCs
+vpc_cidr = "10.0.0.0/16"
+
+# EC2 instance types for the managed node group
+# m5.xlarge provides 4 vCPU, 16 GiB RAM, 10 Gbps network
+node_instance_types = ["m5.xlarge"]
+
+# Minimum number of nodes (must be >= 1)
+node_min_size = 2
+
+# Desired number of nodes at steady state
+node_desired_size = 3
+
+# Maximum number of nodes for autoscaling
+node_max_size = 5
+
+# Root EBS volume size in GiB for each node (must be >= 20)
+node_disk_size = 50
+
+# CIDR block allowed to access NodePort range (30000-32767)
+# Restrict this to your IP range in production
+nodeport_cidr = "0.0.0.0/0"
+
+# Custom AMI with kernel 6.12+ for sched_ext (required by Quack module)
+# Leave empty to use standard AL2023 (no sched_ext support)
+# custom_ami_id = "ami-xxxxxxxxxxxxxxxxx"
+
+# Module enablement - controls IRSA role creation
+enable_tlapix      = true
+enable_earthworm   = true
+enable_ebeecontrol = true
+enable_quack       = true
+enable_correlation = true
