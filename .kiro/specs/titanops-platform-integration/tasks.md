@@ -245,8 +245,8 @@ This plan implements the TitanOps Platform Integration layer in dependency order
 - [x] 10. Checkpoint - Core platform services complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 11. Implement Earthworm AI integration
-  - [~] 11.1 Implement Earthworm anomaly detection with titanops-ai
+- [x] 11. Implement Earthworm AI integration
+  - [x] 11.1 Implement Earthworm anomaly detection with titanops-ai
     - Integrate Earthworm agent with `titanops-ai` LocalProvider for ONNX model loading
     - Implement heartbeat signal analysis producing confidence score [0.0, 1.0]
     - Implement threshold comparison (configurable 0.1-1.0, default 0.75)
@@ -254,13 +254,13 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Log observation without action when score < threshold
     - _Requirements: 10.1, 10.2, 10.3, 10.6_
 
-  - [~] 11.2 Implement Earthworm event emission on autonomous action
+  - [x] 11.2 Implement Earthworm event emission on autonomous action
     - Emit event within 5 seconds of action containing: node ID, confidence score, triggering heartbeat metrics, action type, timestamp
     - Use protobuf Event schema with all required fields populated
     - Publish to shared event bus
     - _Requirements: 10.4_
 
-  - [~] 11.3 Implement Earthworm model failure fallback to rule-based detection
+  - [x] 11.3 Implement Earthworm model failure fallback to rule-based detection
     - Detect model load failure or inference timeout (>10 seconds)
     - Fall back to rule-based threshold detection using configured static thresholds
     - Log degraded-mode warning with failure reason
