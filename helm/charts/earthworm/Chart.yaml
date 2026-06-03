@@ -1,0 +1,6 @@
+apiVersion: v2
+name: earthworm
+description: Earthworm - Node health monitoring and anomaly detection with eBPF
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

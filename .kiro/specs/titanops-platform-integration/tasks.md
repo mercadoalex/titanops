@@ -282,28 +282,28 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - **Validates: Requirements 10.5**
 
 - [ ] 12. Implement TitanOps React Dashboard
-  - [~] 12.1 Set up React project and implement module health view
+  - [x] 12.1 Set up React project and implement module health view
     - Initialize React/TypeScript project with build tooling
     - Implement Module Health view with status indicators (operational, degraded, unavailable)
     - Connect to Gateway `/api/health` endpoint
     - Implement visual indicator update within 5 seconds of state change
     - _Requirements: 8.1, 8.7_
 
-  - [~] 12.2 Implement actions feed and explainability views
+  - [x] 12.2 Implement actions feed and explainability views
     - Implement Actions Feed showing up to 50 recent actions within last 24 hours
     - Display full reasoning chain (observation → analysis → action) per entry
     - Implement Explainability detail view with confidence score [0.0, 1.0] and alternatives considered
     - Connect to Gateway `/api/actions` and `/api/explain/{actionID}` endpoints
     - _Requirements: 8.2, 8.6_
 
-  - [~] 12.3 Implement correlation timeline and override controls
+  - [x] 12.3 Implement correlation timeline and override controls
     - Implement Correlation Timeline view with events grouped by correlation ID
     - Implement configurable time window (default 60 minutes)
     - Implement Override Controls: approve, reject, pause buttons with confirmation within 3 seconds
     - Connect to Gateway `/api/correlations` and `/api/overrides` endpoints
     - _Requirements: 8.3, 8.4, 8.8_
 
-  - [~] 12.4 Implement audit trail view
+  - [x] 12.4 Implement audit trail view
     - Implement Audit Trail view displaying: timestamp, module, action_type, trigger_event, confidence, reasoning, outcome, operator_id
     - Implement filtering and pagination
     - Connect to Gateway `/api/audit` endpoint
@@ -315,28 +315,28 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Test override control interactions and confirmation flow
     - _Requirements: 8.1, 8.2, 8.4_
 
-- [ ] 13. Implement Umbrella Helm Chart
-  - [~] 13.1 Create umbrella chart structure with sub-chart dependencies
+- [x] 13. Implement Umbrella Helm Chart
+  - [x] 13.1 Create umbrella chart structure with sub-chart dependencies
     - Create `helm/titanops/Chart.yaml` with dependency declarations for all four modules
     - Create `helm/titanops/values.yaml` with global settings and per-module toggles (all enabled by default)
     - Declare compatibility matrix with minimum supported versions per module
     - _Requirements: 2.1, 2.2, 2.6_
 
-  - [~] 13.2 Implement shared RBAC and ConfigMap templates
+  - [x] 13.2 Implement shared RBAC and ConfigMap templates
     - Create `templates/shared-rbac.yaml` with ServiceAccount and ClusterRole
     - ClusterRole grants union of permissions for enabled modules only
     - Create `templates/shared-configmap.yaml` with cluster name and OTLP endpoint from values
     - Conditionally include resources only when at least one module enabled
     - _Requirements: 2.3, 2.4, 2.5_
 
-  - [~] 13.3 Implement platform service deployment templates
+  - [x] 13.3 Implement platform service deployment templates
     - Create `templates/correlation-deployment.yaml` for correlation engine
     - Create `templates/gateway-deployment.yaml` for API gateway
     - Create `templates/event-bus-deployment.yaml` for NATS/event bus
     - Create `templates/dashboard-deployment.yaml` for React dashboard
     - _Requirements: 2.1_
 
-  - [~] 13.4 Implement module toggle logic and version constraint validation
+  - [x] 13.4 Implement module toggle logic and version constraint validation
     - Implement conditional rendering: disabled modules excluded from manifests
     - Implement version constraint checking in Chart.yaml dependencies
     - Fail install with descriptive error if sub-chart version constraint not satisfied

@@ -1,0 +1,109 @@
+# TitanOps Platform - Unified Helm Values
+# Global settings apply to all components
+global:
+  clusterName: ""
+  otlpEndpoint: ""
+
+# Module toggles - all enabled by default
+tlapix:
+  enabled: true
+earthworm:
+  enabled: true
+ebeecontrol:
+  enabled: true
+quack:
+  enabled: true
+
+# Correlation engine configuration
+correlation:
+  enabled: true
+  replicas: 1
+  image:
+    repository: titanops/correlation-engine
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  timeWindow: 120s
+  confidenceThreshold: 80
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# Event bus (NATS) configuration
+eventBus:
+  enabled: true
+  type: nats
+  replicas: 1
+  image:
+    repository: nats
+    tag: "2.10-alpine"
+    pullPolicy: IfNotPresent
+  port: 4222
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# API gateway configuration
+gateway:
+  enabled: true
+  replicas: 1
+  image:
+    repository: titanops/gateway
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  port: 8080
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+# Dashboard configuration
+dashboard:
+  enabled: true
+  replicas: 1
+  image:
+    repository: titanops/dashboard
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  port: 3000
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# AI configuration
+ai:
+  provider: local
+  local:
+    modelPath: /opt/titanops/models/
+
+# Export configuration
+export:
+  prometheus:
+    enabled: true
+    port: 9090
+  otlp:
+    enabled: false
+    endpoint: ""
+  splunk:
+    enabled: false
+    hecUrl: ""
+    hecToken: ""
+  dynatrace:
+    enabled: false
+    apiUrl: ""
+    apiToken: ""
+  webhooks: []

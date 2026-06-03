@@ -1,0 +1,61 @@
+🚀 TitanOps Platform has been deployed!
+
+{{- if (include "titanops.anyModuleEnabled" .) }}
+
+📦 Enabled Modules:
+{{- if .Values.tlapix.enabled }}
+  ✓ Tlapix (certificate monitoring)
+{{- end }}
+{{- if .Values.earthworm.enabled }}
+  ✓ Earthworm (node health & anomaly detection)
+{{- end }}
+{{- if .Values.ebeecontrol.enabled }}
+  ✓ eBeeControl (security & honeytoken)
+{{- end }}
+{{- if .Values.quack.enabled }}
+  ✓ Quack (intelligent scheduling)
+{{- end }}
+{{- else }}
+
+⚠️  No modules are currently enabled!
+    Set <module>.enabled=true in values.yaml to enable modules.
+{{- end }}
+
+🛠️  Platform Services:
+{{- if .Values.correlation.enabled }}
+  ✓ Correlation Engine (time window: {{ .Values.correlation.timeWindow }}, threshold: {{ .Values.correlation.confidenceThreshold }})
+{{- end }}
+{{- if .Values.eventBus.enabled }}
+  ✓ Event Bus ({{ .Values.eventBus.type }}, port: {{ .Values.eventBus.port }})
+{{- end }}
+{{- if .Values.gateway.enabled }}
+  ✓ API Gateway (port: {{ .Values.gateway.port }})
+
+  Access the Gateway API:
+    kubectl port-forward svc/{{ include "titanops.fullname" . }}-gateway {{ .Values.gateway.port }}:{{ .Values.gateway.port }}
+    curl http://localhost:{{ .Values.gateway.port }}/api/health
+{{- end }}
+{{- if .Values.dashboard.enabled }}
+  ✓ Dashboard (port: {{ .Values.dashboard.port }})
+
+  Access the Dashboard:
+    kubectl port-forward svc/{{ include "titanops.fullname" . }}-dashboard {{ .Values.dashboard.port }}:{{ .Values.dashboard.port }}
+    Open http://localhost:{{ .Values.dashboard.port }}
+{{- end }}
+
+📊 Export Configuration:
+{{- if .Values.export.prometheus.enabled }}
+  ✓ Prometheus (port: {{ .Values.export.prometheus.port }})
+{{- end }}
+{{- if .Values.export.otlp.enabled }}
+  ✓ OTLP (endpoint: {{ .Values.export.otlp.endpoint }})
+{{- end }}
+{{- if .Values.export.splunk.enabled }}
+  ✓ Splunk HEC
+{{- end }}
+{{- if .Values.export.dynatrace.enabled }}
+  ✓ Dynatrace
+{{- end }}
+
+📖 For more information:
+  https://github.com/mercadoalex/titanops

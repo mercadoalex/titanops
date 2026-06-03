@@ -1,0 +1,27 @@
+{{- if (include "titanops.anyComponentEnabled" .) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "titanops.configMapName" . }}
+  namespace: {{ include "titanops.namespace" . }}
+  labels:
+    {{- include "titanops.labels" . | nindent 4 }}
+data:
+  cluster-name: {{ .Values.global.clusterName | quote }}
+  otlp-endpoint: {{ .Values.global.otlpEndpoint | quote }}
+  ai-provider: {{ .Values.ai.provider | quote }}
+  ai-model-path: {{ .Values.ai.local.modelPath | quote }}
+  {{- if .Values.export.prometheus.enabled }}
+  prometheus-enabled: "true"
+  prometheus-port: {{ .Values.export.prometheus.port | quote }}
+  {{- end }}
+  {{- if .Values.export.otlp.enabled }}
+  otlp-export-enabled: "true"
+  otlp-export-endpoint: {{ .Values.export.otlp.endpoint | quote }}
+  {{- end }}
+  # Module enabled states
+  tlapix-enabled: {{ .Values.tlapix.enabled | quote }}
+  earthworm-enabled: {{ .Values.earthworm.enabled | quote }}
+  ebeecontrol-enabled: {{ .Values.ebeecontrol.enabled | quote }}
+  quack-enabled: {{ .Values.quack.enabled | quote }}
+{{- end }}

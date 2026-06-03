@@ -1,0 +1,62 @@
+{{- if .Values.correlation.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "titanops.fullname" . }}-correlation
+  namespace: {{ include "titanops.namespace" . }}
+  labels:
+    {{- include "titanops.componentLabels" (dict "component" "correlation" "context" .) | nindent 4 }}
+spec:
+  replicas: {{ .Values.correlation.replicas }}
+  selector:
+    matchLabels:
+      {{- include "titanops.componentSelectorLabels" (dict "component" "correlation" "context" .) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "titanops.componentLabels" (dict "component" "correlation" "context" .) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "titanops.serviceAccountName" . }}
+      containers:
+        - name: correlation-engine
+          image: "{{ .Values.correlation.image.repository }}:{{ .Values.correlation.image.tag }}"
+          imagePullPolicy: {{ .Values.correlation.image.pullPolicy }}
+          ports:
+            - name: grpc
+              containerPort: 50051
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            - name: TITANOPS_CLUSTER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "titanops.configMapName" . }}
+                  key: cluster-name
+            - name: TITANOPS_OTLP_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ include "titanops.configMapName" . }}
+                  key: otlp-endpoint
+            - name: TITANOPS_CORRELATION_TIME_WINDOW
+              value: {{ .Values.correlation.timeWindow | quote }}
+            - name: TITANOPS_CORRELATION_CONFIDENCE_THRESHOLD
+              value: {{ .Values.correlation.confidenceThreshold | quote }}
+            - name: TITANOPS_EVENT_BUS_URL
+              value: "nats://{{ include "titanops.fullname" . }}-event-bus:{{ .Values.eventBus.port }}"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.correlation.resources | nindent 12 }}
+{{- end }}

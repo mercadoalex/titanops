@@ -1,0 +1,33 @@
+apiVersion: v2
+name: titanops
+description: TitanOps Platform - Unified AiOps for Kubernetes
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - aiops
+  - kubernetes
+  - observability
+  - ebpf
+  - anomaly-detection
+maintainers:
+  - name: TitanOps Team
+
+# Compatibility matrix: minimum supported versions per module sub-chart
+dependencies:
+  - name: tlapix
+    version: ">=0.1.0"
+    repository: "file://../charts/tlapix"
+    condition: tlapix.enabled
+  - name: earthworm
+    version: ">=0.1.0"
+    repository: "file://../charts/earthworm"
+    condition: earthworm.enabled
+  - name: ebeecontrol
+    version: ">=0.1.0"
+    repository: "file://../charts/ebeecontrol"
+    condition: ebeecontrol.enabled
+  - name: quack
+    version: ">=0.1.0"
+    repository: "file://../charts/quack"
+    condition: quack.enabled

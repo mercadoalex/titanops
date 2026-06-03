@@ -1,0 +1,32 @@
+# Patterns to ignore when building packages.
+.DS_Store
+# Common VCS dirs
+.git/
+.gitignore
+.bzr/
+.bzrignore
+.hg/
+.hgignore
+.svn/
+# Common backup files
+*.swp
+*.bak
+*.tmp
+*.orig
+*~
+# Various IDEs
+.project
+.idea/
+*.tmproj
+.vscode/
+# Test files
+tests/
+*_test.yaml
+# CI files
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE

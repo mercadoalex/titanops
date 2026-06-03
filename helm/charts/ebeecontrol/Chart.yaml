@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ebeecontrol
+description: eBeeControl - Security monitoring and honeytoken management with eBPF
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

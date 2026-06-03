@@ -1,0 +1,69 @@
+{{- if .Values.eventBus.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "titanops.fullname" . }}-event-bus
+  namespace: {{ include "titanops.namespace" . }}
+  labels:
+    {{- include "titanops.componentLabels" (dict "component" "event-bus" "context" .) | nindent 4 }}
+spec:
+  replicas: {{ .Values.eventBus.replicas }}
+  selector:
+    matchLabels:
+      {{- include "titanops.componentSelectorLabels" (dict "component" "event-bus" "context" .) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "titanops.componentLabels" (dict "component" "event-bus" "context" .) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "titanops.serviceAccountName" . }}
+      containers:
+        - name: nats
+          image: "{{ .Values.eventBus.image.repository }}:{{ .Values.eventBus.image.tag }}"
+          imagePullPolicy: {{ .Values.eventBus.image.pullPolicy }}
+          ports:
+            - name: client
+              containerPort: {{ .Values.eventBus.port }}
+              protocol: TCP
+            - name: monitor
+              containerPort: 8222
+              protocol: TCP
+          args:
+            - "--port={{ .Values.eventBus.port }}"
+            - "--http_port=8222"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8222
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            {{- toYaml .Values.eventBus.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "titanops.fullname" . }}-event-bus
+  namespace: {{ include "titanops.namespace" . }}
+  labels:
+    {{- include "titanops.componentLabels" (dict "component" "event-bus" "context" .) | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: {{ .Values.eventBus.port }}
+      targetPort: client
+      protocol: TCP
+      name: client
+    - port: 8222
+      targetPort: monitor
+      protocol: TCP
+      name: monitor
+  selector:
+    {{- include "titanops.componentSelectorLabels" (dict "component" "event-bus" "context" .) | nindent 4 }}
+{{- end }}
