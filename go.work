@@ -1,0 +1,11 @@
+go 1.22.0
+
+use (
+	./correlation
+	./gateway
+	./modules/earthworm
+	./shared/titanops-ai
+	./shared/titanops-config
+	./shared/titanops-export
+	./shared/titanops-k8s
+)
