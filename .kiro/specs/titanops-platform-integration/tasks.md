@@ -157,18 +157,18 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Generate random events × random severity filter sets, verify dispatch iff severity in filter set
     - **Validates: Requirements 4.6**
 
-- [~] 6. Checkpoint - Shared libraries complete
+- [x] 6. Checkpoint - Shared libraries complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 7. Implement protobuf event schema
-  - [~] 7.1 Define protobuf schema and generate Go code
+- [x] 7. Implement protobuf event schema
+  - [x] 7.1 Define protobuf schema and generate Go code
     - Create `proto/titanops/events/v1/events.proto` with Event, CorrelatedIncident, AutoAction messages
     - Define Severity and Module enums
     - Configure `buf.yaml` and `buf.gen.yaml` for Go code generation
     - Generate Go bindings with `buf generate`
     - _Requirements: 7.1, 7.2, 7.4_
 
-  - [~] 7.2 Implement event validation logic
+  - [x] 7.2 Implement event validation logic
     - Implement required field validation (namespace, timestamp, severity, module, event_type, payload)
     - Implement payload size validation (max 64 KB)
     - Implement timestamp UTC RFC 3339 millisecond precision enforcement
@@ -181,21 +181,21 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Verify: round-trip consistency, UTC RFC 3339 timestamps, 64KB limit enforced, missing fields rejected
     - **Validates: Requirements 7.3, 7.5, 7.6, 7.7, 7.8**
 
-- [ ] 8. Implement correlation engine
-  - [~] 8.1 Implement correlation engine core logic
+- [x] 8. Implement correlation engine
+  - [x] 8.1 Implement correlation engine core logic
     - Implement event consumption from event bus (gRPC/NATS subscription)
     - Implement time-window matching: group events by shared attributes (node, pod, namespace)
     - Require at least 2 distinct modules for correlation
     - Implement configurable time window (default 120s, range 10-600s)
     - _Requirements: 5.1, 5.2_
 
-  - [~] 8.2 Implement confidence scoring and narrative generation
+  - [x] 8.2 Implement confidence scoring and narrative generation
     - Implement confidence score calculation (range 0-100) based on signal strength and pattern matching
     - Implement narrative generation including contributing modules, matched attributes, chronological event sequence
     - Implement `CorrelationRule` matching with score weights
     - _Requirements: 5.3, 5.4_
 
-  - [~] 8.3 Implement auto-action execution with threshold gating
+  - [x] 8.3 Implement auto-action execution with threshold gating
     - Implement configurable confidence threshold (default 80, range 1-100)
     - Execute auto-action (isolate_pod, alert_operator, forensic_report) only when confidence ≥ threshold
     - Record failure reason and alert operator if auto-action fails

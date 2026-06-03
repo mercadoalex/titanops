@@ -1,0 +1,64 @@
+syntax = "proto3";
+package titanops.events.v1;
+
+option go_package = "github.com/mercadoalex/titanops/shared/titanops-export";
+
+import "google/protobuf/timestamp.proto";
+
+// Severity defines the severity level of a TitanOps event.
+enum Severity {
+    SEVERITY_UNSPECIFIED = 0;
+    SEVERITY_INFORMATIONAL = 1;
+    SEVERITY_LOW = 2;
+    SEVERITY_MEDIUM = 3;
+    SEVERITY_HIGH = 4;
+    SEVERITY_CRITICAL = 5;
+}
+
+// Module identifies which TitanOps module generated the event.
+enum Module {
+    MODULE_UNSPECIFIED = 0;
+    MODULE_TLAPIX = 1;
+    MODULE_EARTHWORM = 2;
+    MODULE_EBEECONTROL = 3;
+    MODULE_QUACK = 4;
+    MODULE_CORRELATION = 5;
+}
+
+// Event represents a telemetry event emitted by any TitanOps module.
+// All modules MUST populate required fields before publishing to the event bus.
+message Event {
+    // Required fields
+    string namespace = 1;                       // Kubernetes namespace where event originated
+    google.protobuf.Timestamp timestamp = 2;    // UTC, RFC 3339, millisecond precision
+    Severity severity = 3;                      // Event severity level
+    Module module = 4;                          // Source module
+    string event_type = 5;                      // Module-specific event type identifier
+    bytes payload = 6;                          // Event-specific data (max 64 KB)
+
+    // Optional fields
+    optional string node = 7;                   // Kubernetes node name
+    optional string pod = 8;                    // Kubernetes pod name
+
+    // Metadata
+    string event_id = 9;                        // UUID v4
+    map<string, string> labels = 10;            // Arbitrary key-value metadata
+}
+
+// CorrelatedIncident represents a detected correlation across multiple module events.
+message CorrelatedIncident {
+    string incident_id = 1;                     // UUID v4
+    repeated Event contributing_events = 2;     // Events that contributed to this incident
+    double confidence_score = 3;                // Confidence score (0-100)
+    string narrative = 4;                       // Human-readable incident description
+    repeated string matched_attributes = 5;     // Attributes that matched (node, pod, namespace)
+    google.protobuf.Timestamp detected_at = 6;  // When the correlation was detected
+    AutoAction recommended_action = 7;          // Recommended action if threshold met
+}
+
+// AutoAction represents an autonomous action to be executed by the platform.
+message AutoAction {
+    string action_type = 1;                     // isolate_pod, alert_operator, forensic_report
+    map<string, string> parameters = 2;         // Action-specific parameters
+    string reason = 3;                          // Human-readable reason for the action
+}
