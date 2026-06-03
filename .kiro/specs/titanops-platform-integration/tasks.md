@@ -58,22 +58,22 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Generate random failure scenarios (missing files, invalid inputs), verify typed error returned without panic
     - **Validates: Requirements 9.7**
 
-- [ ] 3. Implement titanops-ai shared library
-  - [~] 3.1 Implement LocalProvider with ONNX model loading and inference
+- [x] 3. Implement titanops-ai shared library
+  - [x] 3.1 Implement LocalProvider with ONNX model loading and inference
     - Implement `NewLocalProvider(modelDir string)` that scans for `{moduleID}-anomaly.onnx` files
     - Implement `Predict()` using ONNX Runtime Go bindings for local inference
     - Return typed `ModelUnavailable` error if model file missing, `ModelLoadFailed` if corrupt
     - Ensure zero outbound network requests during predict operations
     - _Requirements: 6.1, 6.5, 6.6, 6.7_
 
-  - [~] 3.2 Implement CloudProvider with fallback to local
+  - [x] 3.2 Implement CloudProvider with fallback to local
     - Implement `CloudProvider` struct wrapping `LocalProvider` and `CloudBackend`
     - Implement 5-second timeout for cloud operations
     - Implement automatic fallback to local ONNX on cloud failure with warning log
     - Route all `Predict()` calls exclusively through local provider regardless of config
     - _Requirements: 6.2, 6.3, 6.4, 6.5_
 
-  - [~] 3.3 Implement cloud backend interface adapters
+  - [x] 3.3 Implement cloud backend interface adapters
     - Define `CloudBackend` interface with `Train()` and `Explain()` methods
     - Create stub adapters for Gemini, Bedrock, Vertex AI, SageMaker
     - Each adapter implements timeout handling and connection error detection
@@ -108,15 +108,15 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Test error conditions: API unreachable, resource not found, permission denied
     - _Requirements: 9.2, 9.7_
 
-- [ ] 5. Implement titanops-export shared library
-  - [~] 5.1 Implement export adapter with concurrent multi-backend dispatch
+- [x] 5. Implement titanops-export shared library
+  - [x] 5.1 Implement export adapter with concurrent multi-backend dispatch
     - Implement `Exporter` interface with concurrent fan-out to all enabled backends
     - Use goroutines with independent error handling per backend
     - Ensure failure in one backend does not block or delay others
     - Implement `BufferStatus()` returning per-backend buffer utilization
     - _Requirements: 4.1, 4.2_
 
-  - [~] 5.2 Implement per-backend formatters (Prometheus, OTLP, Splunk HEC, Dynatrace, Webhook)
+  - [x] 5.2 Implement per-backend formatters (Prometheus, OTLP, Splunk HEC, Dynatrace, Webhook)
     - Implement Prometheus exposition format writer
     - Implement OTLP protobuf serializer
     - Implement Splunk HEC JSON formatter
@@ -124,14 +124,14 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Implement webhook JSON formatter with severity filtering
     - _Requirements: 4.1, 4.3, 4.6, 4.7_
 
-  - [~] 5.3 Implement buffer management with eviction and exponential backoff retry
+  - [x] 5.3 Implement buffer management with eviction and exponential backoff retry
     - Implement ring buffer with capacity 1000 per backend
     - Implement oldest-first eviction when buffer full, emit warning with discard count
     - Implement exponential backoff retry: 1s initial, 60s max, 10 max attempts per event
     - Discard event after 10 failed retries, log permanent failure
     - _Requirements: 4.4, 4.5_
 
-  - [~] 5.4 Implement webhook severity filtering
+  - [x] 5.4 Implement webhook severity filtering
     - Filter events by configured severity set before dispatch
     - Implement 10-second timeout per webhook request
     - Implement max 3 retry attempts on webhook failure
