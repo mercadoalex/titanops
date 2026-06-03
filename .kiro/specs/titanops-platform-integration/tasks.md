@@ -213,8 +213,8 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Generate random confidence scores × random thresholds, verify execution iff score ≥ threshold
     - **Validates: Requirements 5.5**
 
-- [ ] 9. Implement API gateway
-  - [~] 9.1 Implement gateway REST/gRPC endpoints
+- [x] 9. Implement API gateway
+  - [x] 9.1 Implement gateway REST/gRPC endpoints
     - Implement `/api/health` returning ModuleHealth for all modules
     - Implement `/api/actions` returning recent AutonomousAction entries (limit, since params)
     - Implement `/api/correlations` returning CorrelatedIncident timeline
@@ -223,13 +223,13 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Implement `/api/explain/{actionID}` returning explainability details
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
 
-  - [~] 9.2 Implement audit trail recording
+  - [x] 9.2 Implement audit trail recording
     - Record all autonomous actions with: timestamp, module, action_type, trigger_event, confidence, reasoning, outcome, operator_id
     - Record all operator overrides in audit trail
     - Implement AuditFilter for querying historical records
     - _Requirements: 8.5, 8.8_
 
-  - [~] 9.3 Implement operator override controls
+  - [x] 9.3 Implement operator override controls
     - Implement `ApproveAction()` - approve pending action, record in audit
     - Implement `RejectAction()` - cancel action execution, record in audit
     - Implement `PauseModule()` - prevent autonomous actions for module until resumed
@@ -242,7 +242,7 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Verify explainability response includes confidence [0.0, 1.0] and full reasoning chain
     - **Validates: Requirements 8.5, 8.6**
 
-- [~] 10. Checkpoint - Core platform services complete
+- [x] 10. Checkpoint - Core platform services complete
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 11. Implement Earthworm AI integration
