@@ -891,3 +891,107 @@ github.com/mercadoalex/titanops/
 > "One cluster, one Helm install, one state file. Modules share compute, not just code."
 
 Individual module repos contain zero infrastructure code. All Terraform, all cluster config, all shared IAM — it lives in `titanops/infra/`. When you `terraform apply`, you get one EKS cluster ready for `helm install titanops`.
+
+---
+
+## Research: Semantic Vector Search for Unknown Threat Detection
+
+### The Problem: Unknown Unknowns
+
+Current TitanOps detection relies on:
+- ONNX anomaly models (trained on known patterns)
+- Rule-based detection (Tetragon/Falco rules, static thresholds)
+- Correlation rules (explicit "if A + B + C → incident" patterns)
+
+All three approaches share a blind spot: they only catch what they've been taught to recognize. Sophisticated attackers deliberately operate below these detection thresholds — they don't trigger rules because no rule exists for their specific technique.
+
+### The Insight: Semantic Similarity as a Detection Layer
+
+Instead of asking "does this event match a rule?", ask "is this event semantically similar to things we've previously confirmed as malicious?"
+
+The approach (inspired by [Finding the Unknown Unknowns in Cybersecurity](https://medium.com/@jeffrey.sam/finding-the-unknown-unknowns-in-cybersecurity-7fdc6a63652d)):
+
+1. Convert each eBPF/kernel event into a structured "event narrative" (human-readable description of actor, action, outcome)
+2. Embed that narrative into a high-dimensional vector using an embedding model
+3. Build a vector index over historical events (both malicious and benign)
+4. For each new event, find its k-nearest neighbors in vector space
+5. If neighbors include confirmed malicious events → flag as suspicious
+6. Continual learning: when an analyst confirms a finding, the vector index immediately catches similar future events without retraining
+
+### Key Results from Reference Implementation
+
+- Filtered millions of BPF log records down to 17 potential false negatives for human review
+- Accuracy: 99.9%, Recall: 99.46%, Precision: 94.31%
+- k=5 neighbors with majority voting provides best balance of sensitivity and stability
+- Continual learning without model retraining — just add confirmed threats to the index
+
+### Which TitanOps Modules Benefit
+
+| Module | Impact | Rationale |
+|--------|--------|-----------|
+| **eBeeControl** | **Highest** | Same domain — threat detection from kernel events. Catches novel honeytoken access patterns that Tetragon rules miss. New attack vectors flagged by semantic similarity to known threats. |
+| **Correlation Engine** | **High** | Adds vector similarity as a correlation dimension. Events that are semantically related (not just attribute-matched) can be correlated. "This looks like what happened before the crypto-miner incident." |
+| **Earthworm** | **Medium** | Node degradation patterns embedded and searched. "This node's behavior looks like what node Y did before it died" — catches patterns the ONNX model hasn't seen. |
+| **Tlapix** | **Lower** | Certificate lifecycle is deterministic. Vector search adds less value where the problem space is well-defined. |
+| **Quack** | **Lower** | CPU scheduling is numeric/algorithmic. Less semantic nuance in scheduling events. |
+
+### Proposed Architecture
+
+```
+eBPF event → Event Schema (protobuf) → Module AI (ONNX scoring) [fast path, μs]
+                                           │
+                                           ↓ (parallel, cold path)
+                                    Embed event narrative [ms]
+                                           │
+                                           ↓
+                                    Vector Store (in-cluster)
+                                           │
+                                           ↓
+                                    k-NN similarity search
+                                           │
+                                           ↓
+                              "Semantically similar to known threat?"
+                                           │
+                                      yes? → Boost confidence score
+                                           → Feed to Correlation Engine
+                                           → Alert with context
+```
+
+This does NOT replace the ONNX model. It augments it as a secondary enrichment layer:
+- ONNX model: fast path (microseconds), handles known patterns
+- Vector search: cold path (milliseconds), catches unknown-unknowns
+
+### Vector Store Options
+
+| Option | Deployment | Fit for TitanOps |
+|--------|-----------|-----------------|
+| **Qdrant** (recommended) | In-cluster pod via Helm | Rust-based, low footprint, HNSW index, open source, no cloud dependency |
+| OpenSearch | In-cluster or managed | Already a target integration, supports k-NN natively |
+| pgvector | In-cluster PostgreSQL | Simplest for <10M vectors, not purpose-built |
+| Pinecone | Cloud-only | Managed, fast — but violates local-first principle |
+| BigQuery Vector Search | Google Cloud | Scales massively, serverless — but cloud-only |
+| Milvus | In-cluster | CNCF project, scales well — heavier resource footprint |
+
+**Recommendation:** Qdrant in-cluster (same pattern as NATS event bus). Toggled via `vectorSearch.enabled` in Helm values. For Pro/Enterprise tier, optionally connect to managed OpenSearch or BigQuery.
+
+### Key Design Decisions (To Be Resolved)
+
+1. **Embedding model**: Local (sentence-transformers, ~384 dimensions) vs cloud (gemini-embedding-001, 3072 dimensions). Local-first principle suggests a local model as default with cloud as optional enhancement.
+2. **Event narrative format**: Standardize how eBPF events are converted to text for embedding. Needs: actor (process), action (syscall), target (file/network), outcome (return value), context (namespace, pod).
+3. **Index update frequency**: Real-time (every event) vs batch (daily/hourly). Batch aligns with "cold path" approach.
+4. **Feedback loop**: How confirmed threats flow from the Dashboard back to the vector index. Needs API endpoint in the gateway.
+5. **Storage**: Vectors are large (3072 × 4 bytes = 12KB per event). At 1000 events/sec, that's ~1TB/day. Need retention policy.
+
+### Timeline
+
+| Phase | Action |
+|-------|--------|
+| Phase 5 (Correlation Engine) | Design the vector search integration points |
+| Phase 6+ | Implement as an optional platform capability |
+| Future | Evaluate as a differentiator for Pro tier |
+
+### Reference
+
+- [Finding the Unknown Unknowns in Cybersecurity](https://medium.com/@jeffrey.sam/finding-the-unknown-unknowns-in-cybersecurity-7fdc6a63652d) — Jeffrey Sam, 2025
+- [BigQuery Vector Search implementation](https://github.com/pvotal-tech/bigquery-vector-search-2025)
+- [BETH cybersecurity dataset](https://www.kaggle.com/datasets/katehighnam/beth-dataset) — BPF log records for training/validation
