@@ -1,3 +1,5 @@
+// Version: v0.1.0
+// Tag: shared/titanops-config/v0.1.0
 module github.com/mercadoalex/titanops/shared/titanops-config
 
 go 1.22.0

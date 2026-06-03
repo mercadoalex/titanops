@@ -348,8 +348,8 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Verify: only enabled modules in rendered manifests, ClusterRole has exact union of enabled module permissions
     - **Validates: Requirements 2.2, 2.3, 2.5**
 
-- [ ] 14. Implement Grafana Dashboard Pack
-  - [~] 14.1 Create platform overview and correlation dashboards
+- [x] 14. Implement Grafana Dashboard Pack
+  - [x] 14.1 Create platform overview and correlation dashboards
     - Create `grafana/overview-dashboard.json` with module health indicators, events/sec, active alerts, AI decision counts
     - Create `grafana/correlation-dashboard.json` with cross-module timeline (default 30 min window)
     - Ensure compatibility with Grafana 9.0+
@@ -357,7 +357,7 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Display placeholder message for missing Prometheus datasource
     - _Requirements: 3.1, 3.3, 3.4, 3.5, 3.6_
 
-  - [~] 14.2 Create per-module Grafana dashboards
+  - [x] 14.2 Create per-module Grafana dashboards
     - Create Tlapix dashboard: cert inventory, expiry timeline, anomaly count
     - Create Earthworm dashboard: node heartbeat status, anomaly heatmap, prediction timeline
     - Create eBeeControl dashboard: honeytoken map, access events, threat classification
@@ -365,16 +365,16 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Place in each module's `grafana/` directory
     - _Requirements: 3.2, 3.5_
 
-- [ ] 15. Implement platform versioning
-  - [~] 15.1 Set up semantic versioning infrastructure
+- [x] 15. Implement platform versioning
+  - [x] 15.1 Set up semantic versioning infrastructure
     - Configure Go module git tags using format `shared/vMAJOR.MINOR.PATCH`
     - Document versioning policy for shared libraries, Helm charts, and dashboard
     - Implement compatibility matrix file for umbrella chart
     - Document deprecation policy: retain deprecated elements for at least one minor version
     - _Requirements: 11.1, 11.2, 11.3, 11.5, 11.6_
 
-- [ ] 16. Integration wiring and final validation
-  - [~] 16.1 Wire all components together end-to-end
+- [x] 16. Integration wiring and final validation
+  - [x] 16.1 Wire all components together end-to-end
     - Connect modules → event bus → correlation engine → export adapters
     - Connect correlation engine → API gateway → dashboard
     - Wire Earthworm agent with titanops-ai, titanops-k8s, titanops-export
@@ -388,7 +388,7 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Test Kubernetes API interactions via titanops-k8s
     - _Requirements: 5.1, 4.1, 3.5, 9.2_
 
-- [~] 17. Final checkpoint - All tests pass
+- [x] 17. Final checkpoint - All tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

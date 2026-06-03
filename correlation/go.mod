@@ -1,3 +1,5 @@
+// Version: v0.1.0
+// Tag: correlation/v0.1.0
 module github.com/mercadoalex/titanops/correlation
 
 go 1.22.0
