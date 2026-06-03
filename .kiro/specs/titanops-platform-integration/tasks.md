@@ -43,17 +43,17 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Return typed errors without panicking
     - _Requirements: 1.2, 9.7_
 
-  - [ ]* 2.3 Write property test for port configuration validation (Property 1)
+  - [x]* 2.3 Write property test for port configuration validation (Property 1)
     - **Property 1: Port configuration accepts valid range and rejects invalid**
     - Generate random integers across full int range, verify acceptance iff in [1024, 65535]
     - **Validates: Requirements 1.2**
 
-  - [ ]* 2.4 Write property test for configuration loading (Property 14)
+  - [x]* 2.4 Write property test for configuration loading (Property 14)
     - **Property 14: Configuration loading produces valid config or field-level errors**
     - Generate random config inputs (valid and invalid fields), verify either valid struct or field-level errors returned
     - **Validates: Requirements 9.4**
 
-  - [ ]* 2.5 Write property test for no-panic error handling (Property 15)
+  - [x]* 2.5 Write property test for no-panic error handling (Property 15)
     - **Property 15: Shared library operations return typed errors without panicking**
     - Generate random failure scenarios (missing files, invalid inputs), verify typed error returned without panic
     - **Validates: Requirements 9.7**
@@ -79,17 +79,17 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Each adapter implements timeout handling and connection error detection
     - _Requirements: 6.2, 6.4_
 
-  - [ ]* 3.4 Write property test for local-only predict (Property 9)
+  - [x]* 3.4 Write property test for local-only predict (Property 9)
     - **Property 9: Predict operations always use local ONNX without network calls**
     - Generate random feature vectors and provider configs, verify no network calls during predict
     - **Validates: Requirements 6.1, 6.5, 6.6**
 
-  - [ ]* 3.5 Write property test for cloud fallback (Property 10)
+  - [x]* 3.5 Write property test for cloud fallback (Property 10)
     - **Property 10: Cloud AI fallback to local on failure**
     - Generate random requests with simulated cloud failures, verify fallback to local with warning log
     - **Validates: Requirements 6.3**
 
-  - [ ]* 3.6 Write property test for missing model error (Property 11)
+  - [x]* 3.6 Write property test for missing model error (Property 11)
     - **Property 11: Missing ONNX model returns typed error**
     - Generate random module IDs with missing model files, verify typed error returned without panic
     - **Validates: Requirements 6.7**
@@ -103,7 +103,7 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Return typed errors for API unreachable, not found, permission denied scenarios
     - _Requirements: 9.2, 9.7_
 
-  - [ ]* 4.2 Write unit tests for titanops-k8s client
+  - [x]* 4.2 Write unit tests for titanops-k8s client
     - Test with fake client-go clientset for secret reading, pod listing, pod deletion
     - Test error conditions: API unreachable, resource not found, permission denied
     - _Requirements: 9.2, 9.7_
@@ -137,22 +137,22 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Implement max 3 retry attempts on webhook failure
     - _Requirements: 4.6, 9.3_
 
-  - [ ]* 5.5 Write property test for export format correctness (Property 3)
+  - [x]* 5.5 Write property test for export format correctness (Property 3)
     - **Property 3: Export adapter produces correctly formatted output per backend**
     - Generate random valid events × backend types, verify output conforms to wire format
     - **Validates: Requirements 4.1, 4.3**
 
-  - [ ]* 5.6 Write property test for concurrent export isolation (Property 4)
+  - [x]* 5.6 Write property test for concurrent export isolation (Property 4)
     - **Property 4: Concurrent export isolation**
     - Generate random events × random failure patterns, verify non-failing backends complete independently
     - **Validates: Requirements 4.2**
 
-  - [ ]* 5.7 Write property test for buffer behavior (Property 5)
+  - [x]* 5.7 Write property test for buffer behavior (Property 5)
     - **Property 5: Export buffer growth, eviction, and retry**
     - Generate random event sequences (0-2000 length), verify buffer caps at 1000, oldest evicted, backoff correct
     - **Validates: Requirements 4.4, 4.5**
 
-  - [ ]* 5.8 Write property test for webhook severity filtering (Property 6)
+  - [x]* 5.8 Write property test for webhook severity filtering (Property 6)
     - **Property 6: Webhook severity filtering**
     - Generate random events × random severity filter sets, verify dispatch iff severity in filter set
     - **Validates: Requirements 4.6**
@@ -175,7 +175,7 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Return field-level validation errors identifying missing/invalid fields
     - _Requirements: 7.3, 7.5, 7.6, 7.7, 7.8_
 
-  - [ ]* 7.3 Write property test for event schema validation (Property 12)
+  - [x]* 7.3 Write property test for event schema validation (Property 12)
     - **Property 12: Event schema validation round-trip and constraints**
     - Generate random events (valid and invalid), random payloads (0-128KB)
     - Verify: round-trip consistency, UTC RFC 3339 timestamps, 64KB limit enforced, missing fields rejected
@@ -202,13 +202,13 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Emit correlated incidents to export adapters
     - _Requirements: 5.5, 5.6, 5.7_
 
-  - [ ]* 8.4 Write property test for correlation generation (Property 7)
+  - [x]* 8.4 Write property test for correlation generation (Property 7)
     - **Property 7: Correlation engine generates incidents from matching cross-module events**
     - Generate random event sets (varying modules, attributes, timestamps)
     - Verify: incident generated when ≥2 modules match, confidence in [0,100], narrative contains all modules and attributes
     - **Validates: Requirements 5.2, 5.3, 5.4**
 
-  - [ ]* 8.5 Write property test for auto-action threshold (Property 8)
+  - [x]* 8.5 Write property test for auto-action threshold (Property 8)
     - **Property 8: Auto-action executes if and only if confidence exceeds threshold**
     - Generate random confidence scores × random thresholds, verify execution iff score ≥ threshold
     - **Validates: Requirements 5.5**
@@ -236,7 +236,7 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Implement `ResumeModule()` - re-enable autonomous actions for module
     - _Requirements: 8.4, 8.8_
 
-  - [ ]* 9.4 Write property test for audit trail completeness (Property 13)
+  - [x]* 9.4 Write property test for audit trail completeness (Property 13)
     - **Property 13: Audit trail and explainability completeness**
     - Generate random actions and overrides, verify all required fields present in audit entries
     - Verify explainability response includes confidence [0.0, 1.0] and full reasoning chain
@@ -266,22 +266,22 @@ This plan implements the TitanOps Platform Integration layer in dependency order
     - Log degraded-mode warning with failure reason
     - _Requirements: 10.5_
 
-  - [ ]* 11.4 Write property test for Earthworm threshold decision (Property 16)
+  - [x]* 11.4 Write property test for Earthworm threshold decision (Property 16)
     - **Property 16: Earthworm threshold-based remediation decision**
     - Generate random scores × random thresholds, verify: score in [0.0, 1.0], remediation iff score ≥ threshold, log without action otherwise
     - **Validates: Requirements 10.1, 10.2, 10.6**
 
-  - [ ]* 11.5 Write property test for Earthworm event fields (Property 17)
+  - [x]* 11.5 Write property test for Earthworm event fields (Property 17)
     - **Property 17: Earthworm action event field completeness**
     - Generate random remediation actions, verify emitted event contains node ID, confidence, heartbeat metrics, action type, timestamp
     - **Validates: Requirements 10.4**
 
-  - [ ]* 11.6 Write property test for Earthworm fallback (Property 18)
+  - [x]* 11.6 Write property test for Earthworm fallback (Property 18)
     - **Property 18: Earthworm model failure triggers rule-based fallback**
     - Simulate model failures (load failure, timeout), verify fallback to rule-based detection with degraded-mode warning
     - **Validates: Requirements 10.5**
 
-- [ ] 12. Implement TitanOps React Dashboard
+- [x] 12. Implement TitanOps React Dashboard
   - [x] 12.1 Set up React project and implement module health view
     - Initialize React/TypeScript project with build tooling
     - Implement Module Health view with status indicators (operational, degraded, unavailable)

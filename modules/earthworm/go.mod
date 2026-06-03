@@ -6,6 +6,7 @@ require (
 	github.com/mercadoalex/titanops/shared/titanops-ai v0.0.0
 	github.com/mercadoalex/titanops/shared/titanops-export v0.0.0
 	github.com/mercadoalex/titanops/shared/titanops-k8s v0.0.0
+	pgregory.net/rapid v1.1.0
 )
 
 require (
