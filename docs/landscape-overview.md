@@ -64,6 +64,10 @@ graph TB
         QK["AI-Powered Container CPU Scheduling<br/>─────────────────────<br/>• sched_ext kernel scheduler<br/>• Priority scoring via ML model<br/>• Latency-aware decisions<br/>• Autonomous CPU allocation<br/>─────────────────────<br/>Go · sched_ext · ONNX<br/>Status: Splunk ✅ (Helm planned)"]
     end
 
+    subgraph OLLINAI["🔮 OllinAI — Change Intelligence 🚧"]
+        OL["Deployment Risk & DORA Metrics Platform<br/>─────────────────────<br/>• Real-time DORA metrics computation<br/>• ML-powered deployment risk scoring<br/>• Incident-deployment correlation<br/>• eBPF CI/CD supply chain security<br/>• Build attestation (in-toto)<br/>─────────────────────<br/>TypeScript · Next.js · Rust (eBPF agent)<br/>AWS Lambda · DynamoDB · SageMaker<br/>Status: 🚧 Under Construction"]
+    end
+
     %% === SHARED LIBRARIES ===
     subgraph SHARED["📦 SHARED LIBRARIES"]
         direction LR
@@ -88,6 +92,7 @@ graph TB
     TL -->|"cert events"| CE
     EB -->|"threat events"| CE
     QK -->|"scheduling events"| CE
+    OL -->|"deployment risk events"| CE
     
     %% Correlation flows to gateway/dashboard
     CE --> GWS
@@ -98,6 +103,7 @@ graph TB
     AI -.->|"inference"| TL
     AI -.->|"inference"| EB
     AI -.->|"inference"| QK
+    AI -.->|"inference"| OL
     AI -.->|"inference"| CE
     
     K8S -.->|"K8s ops"| EW
@@ -108,6 +114,7 @@ graph TB
     EXP -.->|"telemetry"| TL
     EXP -.->|"telemetry"| EB
     EXP -.->|"telemetry"| QK
+    EXP -.->|"telemetry"| OL
     EXP -.->|"telemetry"| CE
     
     CFG -.->|"config"| EW
@@ -126,7 +133,7 @@ graph TB
     classDef infra fill:#2c3e50,stroke:#1a1a2e,color:#e0e0e0
     
     class TITANOPS platform
-    class EARTHWORM,TLAPIX,EBEECONTROL,QUACK module
+    class EARTHWORM,TLAPIX,EBEECONTROL,QUACK,OLLINAI module
     class SHARED shared
     class INFRA infra
 ```
@@ -184,6 +191,7 @@ flowchart LR
 | **Tlapix** 🦡 | Security | Autonomous TLS certificate lifecycle — detect, predict, renew | Rust | Aya | ONNX (anomaly) | Helm ✅, Prometheus ✅, OTLP ✅ |
 | **eBeeControl** 🐝 | Threat | Deception engine — honeytokens, threat classification, pod isolation | TS → Go | Tetragon | Gemini (optional) | Helm ✅, Dynatrace ✅ |
 | **Quack** 🦆 | Performance | AI-powered sched_ext CPU scheduling for containers | Go | sched_ext | ONNX (priority) | Splunk ✅ (Helm planned) |
+| **OllinAI** 🔮 | Change Intelligence | Deployment risk scoring, DORA metrics, incident correlation, CI/CD supply chain security | TypeScript + Rust | libbpf (agent) | SageMaker (ML) | 🚧 Under Construction |
 
 ---
 
@@ -257,7 +265,8 @@ github.com/mercadoalex/
 ├── tlapix/             ← Independent (Rust, Aya eBPF)
 ├── earthworm/          ← Independent (Go, cilium/ebpf)  
 ├── ebeecontrol/        ← Independent (TypeScript → Go rewrite planned)
-└── quack/              ← Independent (Go, sched_ext)
+├── quack/              ← Independent (Go, sched_ext)
+└── OllinAI-/           ← Independent (TypeScript + Rust, B2B SaaS) 🚧
 ```
 
 - **Hybrid multi-repo**: each module keeps its identity, history, stars, and independent release cycle
@@ -283,7 +292,7 @@ github.com/mercadoalex/
 
 | Tier | Includes | Price |
 |------|----------|-------|
-| **Open Source** | All 4 modules, Helm charts, Grafana dashboards | Free |
+| **Open Source** | All 5 modules, Helm charts, Grafana dashboards | Free |
 | **Pro** | Correlation engine, managed AI models, priority support | $/node/month |
 | **Enterprise** | Custom integrations, SLA, dedicated support, training | Contact |
 
