@@ -11,6 +11,7 @@ type Gateway struct {
 	audit        *AuditStore
 	overrides    *OverrideStore
 	correlations *CorrelationStore
+	ollinai      *OllinAIStore
 }
 
 // NewGateway creates a new Gateway with initialized stores.
@@ -20,6 +21,7 @@ func NewGateway() *Gateway {
 	audit := NewAuditStore()
 	overrides := NewOverrideStore(audit, actions)
 	correlations := NewCorrelationStore()
+	ollinai := NewOllinAIStore()
 
 	return &Gateway{
 		health:       health,
@@ -27,6 +29,7 @@ func NewGateway() *Gateway {
 		audit:        audit,
 		overrides:    overrides,
 		correlations: correlations,
+		ollinai:      ollinai,
 	}
 }
 
@@ -38,6 +41,7 @@ func (g *Gateway) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/overrides", g.handleOverrides)
 	mux.HandleFunc("/api/audit", g.handleAudit)
 	mux.HandleFunc("/api/explain/", g.handleExplain)
+	mux.HandleFunc("/api/ollinai", g.handleOllinAI)
 }
 
 // Health returns the health store for direct access (e.g., from other services).
@@ -63,4 +67,9 @@ func (g *Gateway) Overrides() *OverrideStore {
 // Correlations returns the correlation store for direct access.
 func (g *Gateway) Correlations() *CorrelationStore {
 	return g.correlations
+}
+
+// OllinAI returns the OllinAI store for direct access.
+func (g *Gateway) OllinAI() *OllinAIStore {
+	return g.ollinai
 }

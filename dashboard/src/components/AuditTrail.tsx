@@ -66,6 +66,7 @@ export function AuditTrail() {
             <option value="tlapix">Tlapix</option>
             <option value="ebeecontrol">eBeeControl</option>
             <option value="quack">Quack</option>
+            <option value="ollinai">OllinAI</option>
           </select>
         </label>
 

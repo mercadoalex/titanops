@@ -31,3 +31,7 @@ dependencies:
     version: ">=0.1.0"
     repository: "file://../charts/quack"
     condition: quack.enabled
+  - name: ollinai
+    version: ">=0.1.0"
+    repository: "file://../charts/ollinai"
+    condition: ollinai.enabled

@@ -1,0 +1,66 @@
+{{- if .Values.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "titanops.fullname" . }}
+  namespace: {{ include "titanops.namespace" . }}
+  labels:
+    {{- include "titanops.componentLabels" (dict "component" "change-intelligence" "context" .) | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas | default 1 | min 5 | max 1 }}
+  selector:
+    matchLabels:
+      {{- include "titanops.componentSelectorLabels" (dict "component" "change-intelligence" "context" .) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "titanops.componentLabels" (dict "component" "change-intelligence" "context" .) | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "titanops.serviceAccountName" . }}
+      containers:
+        - name: ollinai-adapter
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: webhook
+              containerPort: {{ .Values.webhookPort }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.metricsPort }}
+              protocol: TCP
+          env:
+            - name: TITANOPS_OLLINAI_ENDPOINT
+              value: {{ .Values.endpoint | quote }}
+            - name: TITANOPS_OLLINAI_AUTH_TOKEN
+              value: {{ .Values.authToken | quote }}
+            - name: TITANOPS_OLLINAI_WEBHOOK_PORT
+              value: {{ .Values.webhookPort | quote }}
+            - name: TITANOPS_OLLINAI_WEBHOOK_HMAC_KEY
+              value: {{ .Values.webhookHmacKey | quote }}
+            - name: TITANOPS_OLLINAI_RISK_POLL_INTERVAL
+              value: {{ .Values.riskPollInterval | quote }}
+            - name: TITANOPS_OLLINAI_DORA_POLL_INTERVAL
+              value: {{ .Values.doraPollInterval | quote }}
+            - name: TITANOPS_OLLINAI_NATS_URL
+              value: {{ .Values.natsUrl | quote }}
+            - name: TITANOPS_OLLINAI_BUFFER_CAPACITY
+              value: {{ .Values.bufferCapacity | quote }}
+            - name: TITANOPS_OLLINAI_MAX_PAYLOAD_BYTES
+              value: {{ .Values.maxPayloadBytes | quote }}
+            - name: TITANOPS_OLLINAI_METRICS_PORT
+              value: {{ .Values.metricsPort | quote }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: webhook
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: webhook
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+{{- end }}

@@ -70,6 +70,30 @@ export function CorrelationTimeline() {
               </time>
             </header>
             <p className="correlation-narrative">{incident.narrative}</p>
+            {incident.modules.includes('ollinai') && incident.deployment_metadata && (
+              <dl className="deployment-metadata" aria-label="Deployment metadata">
+                {incident.deployment_metadata.service && (
+                  <>
+                    <dt>Service</dt>
+                    <dd>{incident.deployment_metadata.service}</dd>
+                  </>
+                )}
+                {incident.deployment_metadata.commit_sha && (
+                  <>
+                    <dt>Commit</dt>
+                    <dd>
+                      <code>{incident.deployment_metadata.commit_sha.slice(0, 8)}</code>
+                    </dd>
+                  </>
+                )}
+                {incident.deployment_metadata.deployer && (
+                  <>
+                    <dt>Deployer</dt>
+                    <dd>{incident.deployment_metadata.deployer}</dd>
+                  </>
+                )}
+              </dl>
+            )}
             <ul className="correlation-modules" aria-label="Contributing modules">
               {incident.modules.map((mod) => (
                 <li key={mod} className="module-tag">

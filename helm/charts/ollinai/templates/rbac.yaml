@@ -1,0 +1,31 @@
+{{- if .Values.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "titanops.fullname" . }}
+  labels:
+    {{- include "titanops.componentLabels" (dict "component" "change-intelligence" "context" .) | nindent 4 }}
+rules:
+  # OllinAI permissions: deployment and replica monitoring for change intelligence
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "titanops.fullname" . }}
+  labels:
+    {{- include "titanops.componentLabels" (dict "component" "change-intelligence" "context" .) | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "titanops.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "titanops.serviceAccountName" . }}
+    namespace: {{ include "titanops.namespace" . }}
+{{- end }}

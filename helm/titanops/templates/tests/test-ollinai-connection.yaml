@@ -1,0 +1,45 @@
+{{- if .Values.ollinai.enabled }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "titanops.fullname" . }}-test-ollinai
+  namespace: {{ include "titanops.namespace" . }}
+  labels:
+    {{- include "titanops.componentLabels" (dict "component" "change-intelligence" "context" .) | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
+spec:
+  restartPolicy: Never
+  containers:
+    - name: ollinai-test
+      image: busybox:1.36
+      command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Testing NATS connectivity..."
+          NATS_HOST="{{ include "titanops.fullname" . }}-event-bus"
+          NATS_PORT="{{ .Values.eventBus.port }}"
+          if ! timeout 10 sh -c "until nc -z ${NATS_HOST} ${NATS_PORT}; do sleep 1; done"; then
+            echo "FAIL: Cannot connect to NATS at ${NATS_HOST}:${NATS_PORT} within 10 seconds"
+            exit 1
+          fi
+          echo "OK: NATS connection successful"
+
+          echo "Testing OllinAI API connectivity..."
+          OLLINAI_ENDPOINT="{{ .Values.ollinai.endpoint }}"
+          # Extract host and port from endpoint URL
+          OLLINAI_HOST=$(echo "${OLLINAI_ENDPOINT}" | sed -e 's|https\?://||' -e 's|/.*||' -e 's|:.*||')
+          OLLINAI_PORT=$(echo "${OLLINAI_ENDPOINT}" | sed -e 's|https\?://||' -e 's|/.*||' -e 's|.*:||')
+          if [ -z "${OLLINAI_PORT}" ] || [ "${OLLINAI_PORT}" = "${OLLINAI_HOST}" ]; then
+            OLLINAI_PORT=443
+          fi
+          if ! timeout 10 sh -c "until nc -z ${OLLINAI_HOST} ${OLLINAI_PORT}; do sleep 1; done"; then
+            echo "FAIL: Cannot connect to OllinAI API at ${OLLINAI_HOST}:${OLLINAI_PORT} within 10 seconds"
+            exit 1
+          fi
+          echo "OK: OllinAI API connection successful"
+
+          echo "All connectivity tests passed."
+{{- end }}

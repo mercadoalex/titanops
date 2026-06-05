@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ollinai
+description: OllinAI - Change Intelligence and Deployment Risk adapter for TitanOps
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

@@ -522,3 +522,95 @@ h4 {
     grid-template-columns: 1fr;
   }
 }
+
+/* OllinAI Panel */
+.ollinai-risk-list {
+  list-style: none;
+  margin-top: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.ollinai-risk-item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ollinai-risk-critical {
+  border-color: var(--color-unavailable);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.ollinai-risk-critical .ollinai-risk-score {
+  color: var(--color-unavailable);
+  font-weight: 700;
+}
+
+.ollinai-risk-score {
+  font-size: 1.1rem;
+  font-weight: 600;
+  min-width: 2.5rem;
+  text-align: center;
+}
+
+.ollinai-risk-service {
+  font-weight: 600;
+}
+
+.ollinai-risk-deployer {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.ollinai-risk-commit {
+  font-family: monospace;
+  font-size: 0.8rem;
+  background: var(--color-border);
+  padding: 0.1rem 0.4rem;
+  border-radius: var(--radius);
+}
+
+.ollinai-risk-time {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-left: auto;
+}
+
+.ollinai-dora-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.ollinai-dora-item {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 1rem;
+}
+
+.ollinai-dora-item dt {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.25rem;
+}
+
+.ollinai-dora-item dd {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.ollinai-dora-empty {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 0.5rem;
+}

@@ -19,8 +19,7 @@
 .idea/
 *.tmproj
 .vscode/
-# Test files
-tests/
+# Test files (not templates/tests/ which contains Helm test hooks)
 *_test.yaml
 # CI files
 .github/

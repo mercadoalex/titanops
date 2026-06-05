@@ -115,3 +115,57 @@ func (s *ActionStore) UpdateOutcome(_ context.Context, actionID, outcome, operat
 		}
 	}
 }
+
+// OllinAIStore provides thread-safe in-memory storage for OllinAI deployment risk data and DORA metrics.
+type OllinAIStore struct {
+	mu          sync.RWMutex
+	deployments []DeploymentRiskEntry
+	doraMetrics *DORAMetrics
+}
+
+// NewOllinAIStore creates a new empty OllinAI store.
+func NewOllinAIStore() *OllinAIStore {
+	return &OllinAIStore{
+		deployments: make([]DeploymentRiskEntry, 0),
+	}
+}
+
+// AddDeployment records a new deployment risk entry.
+func (s *OllinAIStore) AddDeployment(_ context.Context, entry DeploymentRiskEntry) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.deployments = append(s.deployments, entry)
+}
+
+// RecentDeployments returns the most recent deployment risk entries, limited by count.
+func (s *OllinAIStore) RecentDeployments(_ context.Context, limit int) []DeploymentRiskEntry {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if limit <= 0 || len(s.deployments) == 0 {
+		return []DeploymentRiskEntry{}
+	}
+
+	start := 0
+	if len(s.deployments) > limit {
+		start = len(s.deployments) - limit
+	}
+
+	result := make([]DeploymentRiskEntry, len(s.deployments)-start)
+	copy(result, s.deployments[start:])
+	return result
+}
+
+// UpdateDORAMetrics replaces the current DORA metrics snapshot.
+func (s *OllinAIStore) UpdateDORAMetrics(_ context.Context, metrics *DORAMetrics) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.doraMetrics = metrics
+}
+
+// GetDORAMetrics returns the current DORA metrics snapshot (may be nil).
+func (s *OllinAIStore) GetDORAMetrics(_ context.Context) *DORAMetrics {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.doraMetrics
+}
