@@ -56,6 +56,13 @@ export interface CorrelatedIncident {
   detected_at: string; // ISO 8601 timestamp
   action_taken: boolean;
   action_outcome?: string;
+  deployment_metadata?: {
+    service?: string;
+    commit_sha?: string;
+    deployer?: string;
+    risk_score?: number;
+    risk_factors?: string[];
+  };
 }
 
 /** Override request body for POST /api/overrides */
@@ -74,4 +81,36 @@ export interface ExplainDetail {
   reasoning: ReasoningChain;
   trigger_event: string;
   timestamp: string;
+  deployment_metadata?: {
+    service?: string;
+    commit_sha?: string;
+    deployer?: string;
+    risk_score?: number;
+    risk_factors?: string[];
+  };
+}
+
+/** Deployment risk entry from OllinAI */
+export interface DeploymentRiskEntry {
+  service: string;
+  commit_sha: string;
+  deployer: string;
+  risk_score: number;
+  risk_factors: string[];
+  timestamp: string;
+}
+
+/** DORA metrics from OllinAI */
+export interface DORAMetrics {
+  deployment_frequency: number;      // deploys per day
+  lead_time_for_changes: number;     // hours
+  change_failure_rate: number;       // 0.0-1.0
+  mean_time_to_recovery: number;     // hours
+  updated_at: string;
+}
+
+/** Response from GET /api/ollinai */
+export interface OllinAIResponse {
+  recent_deployments: DeploymentRiskEntry[];
+  dora_metrics: DORAMetrics | null;
 }

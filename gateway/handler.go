@@ -163,6 +163,24 @@ func (g *Gateway) handleAudit(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, entries)
 }
 
+// handleOllinAI returns OllinAI deployment risk and DORA metrics data.
+// GET /api/ollinai
+func (g *Gateway) handleOllinAI(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	deployments := g.ollinai.RecentDeployments(r.Context(), 10)
+	doraMetrics := g.ollinai.GetDORAMetrics(r.Context())
+
+	resp := OllinAIResponse{
+		RecentDeployments: deployments,
+		DORAMetrics:       doraMetrics,
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
 // handleExplain returns explainability details for a specific action.
 // GET /api/explain/{actionID}
 func (g *Gateway) handleExplain(w http.ResponseWriter, r *http.Request) {

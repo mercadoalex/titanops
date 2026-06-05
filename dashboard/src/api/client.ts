@@ -6,6 +6,7 @@ import type {
   CorrelatedIncident,
   OverrideRequest,
   ExplainDetail,
+  OllinAIResponse,
 } from '../types';
 
 const BASE = '/api';
@@ -59,4 +60,9 @@ export function fetchAudit(filter: AuditFilter = {}): Promise<AuditEntry[]> {
   if (filter.page_size !== undefined) params.set('page_size', String(filter.page_size));
   const qs = params.toString();
   return request<AuditEntry[]>(`/audit${qs ? `?${qs}` : ''}`);
+}
+
+/** Fetch OllinAI deployment risk and DORA metrics. */
+export function fetchOllinAI(): Promise<OllinAIResponse> {
+  return request<OllinAIResponse>('/ollinai');
 }

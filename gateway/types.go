@@ -56,6 +56,31 @@ type OverrideRequest struct {
 	OperatorID string `json:"operator_id"`
 }
 
+// DeploymentRiskEntry represents a single deployment risk assessment from OllinAI.
+type DeploymentRiskEntry struct {
+	Service     string   `json:"service"`
+	CommitSHA   string   `json:"commit_sha"`
+	Deployer    string   `json:"deployer"`
+	RiskScore   int      `json:"risk_score"`
+	RiskFactors []string `json:"risk_factors"`
+	Timestamp   string   `json:"timestamp"`
+}
+
+// DORAMetrics represents the current DORA metrics from OllinAI.
+type DORAMetrics struct {
+	DeploymentFrequency  float64 `json:"deployment_frequency"`
+	LeadTimeForChanges   float64 `json:"lead_time_for_changes"`
+	ChangeFailureRate    float64 `json:"change_failure_rate"`
+	MeanTimeToRecovery   float64 `json:"mean_time_to_recovery"`
+	UpdatedAt            string  `json:"updated_at"`
+}
+
+// OllinAIResponse is the response payload for the GET /api/ollinai endpoint.
+type OllinAIResponse struct {
+	RecentDeployments []DeploymentRiskEntry `json:"recent_deployments"`
+	DORAMetrics       *DORAMetrics          `json:"dora_metrics"`
+}
+
 // CorrelatedIncident represents a cross-module correlated incident for the API.
 type CorrelatedIncident struct {
 	IncidentID    string    `json:"incident_id"`

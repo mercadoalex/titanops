@@ -14,6 +14,9 @@ import (
 // Template: "Correlated incident detected: {module1} reported {event_type1} and
 // {module2} reported {event_type2} on {matched_attrs} within {duration}.
 // Confidence: {score}%."
+//
+// When an OllinAI deployment_risk event is in the group, deployment metadata
+// (service name, commit SHA, deployer) is appended if present and non-empty.
 func GenerateNarrative(events []export.Event, matchedAttributes []string, score int) string {
 	if len(events) == 0 {
 		return "No events to correlate."
@@ -58,8 +61,77 @@ func GenerateNarrative(events []export.Event, matchedAttributes []string, score 
 	duration := eventTimeSpan(sorted)
 	durationString := formatDuration(duration)
 
-	return fmt.Sprintf("Correlated incident detected: %s on %s within %s. Confidence: %d%%.",
+	narrative := fmt.Sprintf("Correlated incident detected: %s on %s within %s. Confidence: %d%%.",
 		moduleString, attrsString, durationString, score)
+
+	// Append OllinAI deployment metadata if present.
+	deploymentMeta := generateOllinAIDeploymentMeta(sorted)
+	if deploymentMeta != "" {
+		narrative += " " + deploymentMeta
+	}
+
+	return narrative
+}
+
+// generateOllinAIDeploymentMeta builds a deployment metadata string from OllinAI
+// deployment_risk events in the group. Only includes non-empty fields.
+// Returns empty string if no OllinAI deployment_risk event is present or all metadata is empty.
+func generateOllinAIDeploymentMeta(events []export.Event) string {
+	for _, ev := range events {
+		if ev.Module == "ollinai" && ev.EventType == "deployment_risk" {
+			return buildDeploymentMetaString(ev)
+		}
+	}
+	return ""
+}
+
+// buildDeploymentMetaString constructs a narrative fragment from deployment Labels.
+// Includes service name, commit SHA, and deployer only when present and non-empty.
+// Also includes risk_score if available.
+func buildDeploymentMetaString(ev export.Event) string {
+	if ev.Labels == nil {
+		return ""
+	}
+
+	service := ev.Labels["service"]
+	commitSHA := ev.Labels["commit_sha"]
+	deployer := ev.Labels["deployer"]
+	riskScore := ev.Labels["risk_score"]
+
+	// If all metadata fields are empty, return nothing.
+	if service == "" && commitSHA == "" && deployer == "" {
+		return ""
+	}
+
+	var sb strings.Builder
+	sb.WriteString("Deployment")
+
+	if service != "" {
+		sb.WriteString(" of ")
+		sb.WriteString(service)
+	}
+
+	// Build parenthetical with commit and deployer.
+	var metaParts []string
+	if commitSHA != "" {
+		metaParts = append(metaParts, "commit "+commitSHA)
+	}
+	if deployer != "" {
+		metaParts = append(metaParts, "by "+deployer)
+	}
+	if len(metaParts) > 0 {
+		sb.WriteString(" (")
+		sb.WriteString(strings.Join(metaParts, " "))
+		sb.WriteString(")")
+	}
+
+	if riskScore != "" {
+		sb.WriteString(" with risk score ")
+		sb.WriteString(riskScore)
+	}
+
+	sb.WriteString(" occurred within the correlation window.")
+	return sb.String()
 }
 
 // joinWithAnd joins strings with ", " and " and " for the last element.

@@ -75,6 +75,63 @@ export function ExplainView({ actionId, onClose }: ExplainViewProps) {
             </dd>
           </dl>
 
+          {detail.module === 'ollinai' && detail.deployment_metadata && (
+            <div className="deployment-details">
+              <h4>Deployment Details</h4>
+              <dl>
+                {detail.deployment_metadata.service && (
+                  <>
+                    <dt>Service</dt>
+                    <dd>{detail.deployment_metadata.service}</dd>
+                  </>
+                )}
+                {detail.deployment_metadata.commit_sha && (
+                  <>
+                    <dt>Commit SHA</dt>
+                    <dd>
+                      <code>{detail.deployment_metadata.commit_sha}</code>
+                    </dd>
+                  </>
+                )}
+                {detail.deployment_metadata.deployer && (
+                  <>
+                    <dt>Deployer</dt>
+                    <dd>{detail.deployment_metadata.deployer}</dd>
+                  </>
+                )}
+                {detail.deployment_metadata.risk_score !== undefined && (
+                  <>
+                    <dt>Risk Score</dt>
+                    <dd
+                      className={
+                        detail.deployment_metadata.risk_score >= 80
+                          ? 'risk-critical'
+                          : detail.deployment_metadata.risk_score >= 60
+                            ? 'risk-high'
+                            : ''
+                      }
+                    >
+                      {detail.deployment_metadata.risk_score}
+                    </dd>
+                  </>
+                )}
+                {detail.deployment_metadata.risk_factors &&
+                  detail.deployment_metadata.risk_factors.length > 0 && (
+                    <>
+                      <dt>Risk Factors</dt>
+                      <dd>
+                        <ul>
+                          {detail.deployment_metadata.risk_factors.map((factor, i) => (
+                            <li key={i}>{factor}</li>
+                          ))}
+                        </ul>
+                      </dd>
+                    </>
+                  )}
+              </dl>
+            </div>
+          )}
+
           <h4>Reasoning Chain</h4>
           <dl className="reasoning-chain">
             <dt>Observation</dt>

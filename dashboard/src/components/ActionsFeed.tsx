@@ -8,6 +8,7 @@ interface ActionsFeedProps {
 
 export function ActionsFeed({ onSelectAction }: ActionsFeedProps) {
   const [actions, setActions] = useState<AutonomousAction[]>([]);
+  const [moduleFilter, setModuleFilter] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -33,16 +34,39 @@ export function ActionsFeed({ onSelectAction }: ActionsFeedProps) {
     };
   }, []);
 
+  const filteredActions = moduleFilter
+    ? actions.filter((a) => a.module === moduleFilter)
+    : actions;
+
   return (
     <section aria-labelledby="actions-feed-heading">
       <h2 id="actions-feed-heading">Recent Actions</h2>
+
+      <div className="actions-filters" role="group" aria-label="Actions feed filters">
+        <label htmlFor="actions-module-filter">
+          Module:{' '}
+          <select
+            id="actions-module-filter"
+            value={moduleFilter}
+            onChange={(e) => setModuleFilter(e.target.value)}
+          >
+            <option value="">All</option>
+            <option value="earthworm">Earthworm</option>
+            <option value="tlapix">Tlapix</option>
+            <option value="ebeecontrol">eBeeControl</option>
+            <option value="quack">Quack</option>
+            <option value="ollinai">OllinAI</option>
+          </select>
+        </label>
+      </div>
+
       {error && (
         <p role="alert" className="error-message">
           {error}
         </p>
       )}
       <ol className="actions-feed-list" role="list">
-        {actions.map((action) => (
+        {filteredActions.map((action) => (
           <li key={action.id} className="action-item">
             <header className="action-header">
               <strong>{action.module}</strong>

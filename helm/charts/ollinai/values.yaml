@@ -1,0 +1,32 @@
+enabled: false
+
+replicas: 1
+
+image:
+  repository: titanops/ollinai-adapter
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+
+endpoint: ""
+authToken: ""
+
+webhookPort: 8090
+webhookHmacKey: ""
+
+riskPollInterval: 30s
+doraPollInterval: 5m
+
+natsUrl: "nats://titanops-nats:4222"
+
+bufferCapacity: 1000
+maxPayloadBytes: 65536
+
+metricsPort: 9090
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi

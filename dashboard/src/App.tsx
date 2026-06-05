@@ -4,8 +4,9 @@ import { ActionsFeed } from './components/ActionsFeed';
 import { ExplainView } from './components/ExplainView';
 import { CorrelationTimeline } from './components/CorrelationTimeline';
 import { AuditTrail } from './components/AuditTrail';
+import { OllinAIPanel } from './components/OllinAIPanel';
 
-type View = 'health' | 'actions' | 'correlations' | 'audit';
+type View = 'health' | 'actions' | 'correlations' | 'audit' | 'ollinai';
 
 export function App() {
   const [view, setView] = useState<View>('health');
@@ -57,6 +58,16 @@ export function App() {
                 Audit
               </button>
             </li>
+            <li>
+              <button
+                type="button"
+                className={view === 'ollinai' ? 'nav-active' : ''}
+                onClick={() => setView('ollinai')}
+                aria-current={view === 'ollinai' ? 'page' : undefined}
+              >
+                OllinAI
+              </button>
+            </li>
           </ul>
         </nav>
       </header>
@@ -74,6 +85,7 @@ export function App() {
         )}
         {view === 'correlations' && <CorrelationTimeline />}
         {view === 'audit' && <AuditTrail />}
+        {view === 'ollinai' && <OllinAIPanel />}
       </main>
     </div>
   );
