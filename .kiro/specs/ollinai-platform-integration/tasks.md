@@ -27,7 +27,7 @@ This plan implements the OllinAI Change Intelligence integration as a first-clas
     - Use titanops-config `Load()` with `WithEnvPrefix("TITANOPS_OLLINAI")` and `WithFile()`
     - _Requirements: 6.1, 6.2, 6.4_
 
-  - [ ]* 1.4 Write property test for configuration validation (Property 11)
+  - [x]* 1.4 Write property test for configuration validation (Property 11)
     - **Property 11: Configuration validation rejects invalid configs**
     - **Validates: Requirements 6.2, 6.4**
     - Use `pgregory.net/rapid` to generate Config structs with fields drawn from both valid and invalid ranges
@@ -42,22 +42,22 @@ This plan implements the OllinAI Change Intelligence integration as a first-clas
     - Populate Node, Pod, Namespace from metadata; set `metadata_incomplete` label when any is empty
     - _Requirements: 1.4, 1.5, 1.6, 1.9, 5.1, 5.3, 5.4, 5.5_
 
-  - [ ]* 2.2 Write property test for ring buffer capacity invariant (Property 6)
+  - [x]* 2.2 Write property test for ring buffer capacity invariant (Property 6)
     - **Property 6: Ring buffer capacity invariant**
     - **Validates: Requirements 1.9, 5.3**
     - Generate sequences of events pushed to buffer (capacity 1000); assert length never exceeds capacity and oldest event is evicted first
 
-  - [ ]* 2.3 Write property test for EventID uniqueness (Property 4)
+  - [x]* 2.3 Write property test for EventID uniqueness (Property 4)
     - **Property 4: EventID uniqueness**
     - **Validates: Requirements 1.6, 5.4**
     - Generate sequences of N events; assert all EventIDs are distinct valid UUID v4 strings and all Timestamps are valid RFC 3339 UTC
 
-  - [ ]* 2.4 Write property test for metadata population and incomplete label (Property 3)
+  - [x]* 2.4 Write property test for metadata population and incomplete label (Property 3)
     - **Property 3: Event metadata population and incomplete label**
     - **Validates: Requirements 1.4, 1.5**
     - Generate combinations of Node/Pod/Namespace (each either non-empty or empty); assert `metadata_incomplete=true` label present iff at least one is empty
 
-  - [ ]* 2.5 Write property test for payload serialization and truncation (Property 5)
+  - [x]* 2.5 Write property test for payload serialization and truncation (Property 5)
     - **Property 5: Payload serialization and truncation**
     - **Validates: Requirements 1.7, 1.8**
     - Generate payload structs of varying sizes; assert serialized JSON ≤ 64KB, and `payload_truncated=true` label set when truncation occurs
@@ -85,12 +85,12 @@ This plan implements the OllinAI Change Intelligence integration as a first-clas
     - Call `EventEmitter.Emit()` for each event; retry up to 3 times on failure
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.7_
 
-  - [ ]* 4.3 Write property test for severity mapping (Property 1)
+  - [x]* 4.3 Write property test for severity mapping (Property 1)
     - **Property 1: Severity mapping from risk score**
     - **Validates: Requirements 1.1**
     - Generate risk scores in [0, 100]; assert severity is critical ≥80, high ≥60, medium ≥40, low <40; Module="ollinai", EventType="deployment_risk"
 
-  - [ ]* 4.4 Write property test for DORA metrics payload completeness (Property 2)
+  - [x]* 4.4 Write property test for DORA metrics payload completeness (Property 2)
     - **Property 2: DORA metrics payload completeness**
     - **Validates: Requirements 1.2**
     - Generate DORA metric values; serialize and deserialize; assert all four keys present with matching values
@@ -109,7 +109,7 @@ This plan implements the OllinAI Change Intelligence integration as a first-clas
     - `/readyz` returns HTTP 200 iff both NATS and OllinAI connections are active; HTTP 503 otherwise
     - _Requirements: 8.1, 8.2, 8.3, 8.4_
 
-  - [ ]* 5.3 Write property test for readyz connection state (Property 12)
+  - [x]* 5.3 Write property test for readyz connection state (Property 12)
     - **Property 12: Readyz reflects connection state**
     - **Validates: Requirements 8.2, 8.3, 8.4**
     - Generate all combinations of (NATS connected/disconnected, OllinAI connected/disconnected); assert HTTP 200 iff both connected, HTTP 503 otherwise
@@ -142,22 +142,22 @@ This plan implements the OllinAI Change Intelligence integration as a first-clas
     - Supply chain events correlated with deployment_risk events in same Namespace increase confidence per standard formula
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.7, 7.6_
 
-  - [ ]* 7.4 Write property test for deployment risk bonus scoring (Property 8)
+  - [x]* 7.4 Write property test for deployment risk bonus scoring (Property 8)
     - **Property 8: Deployment risk bonus scoring**
     - **Validates: Requirements 2.5**
     - Generate risk score R in [0, 100] and base confidence B in [0, 100]; assert bonus = floor(R/5) and total = min(B + floor(R/5), 100)
 
-  - [ ]* 7.5 Write property test for cross-module correlation matching (Property 7)
+  - [x]* 7.5 Write property test for cross-module correlation matching (Property 7)
     - **Property 7: Cross-module correlation matching**
     - **Validates: Requirements 2.1, 2.2, 2.3, 2.4, 7.6**
     - Generate pairs of OllinAI + other-module events with varying attributes and timestamps; assert CorrelatedIncident generated iff shared attribute exists AND both within time window
 
-  - [ ]* 7.6 Write property test for narrative metadata inclusion (Property 9)
+  - [x]* 7.6 Write property test for narrative metadata inclusion (Property 9)
     - **Property 9: Narrative metadata inclusion**
     - **Validates: Requirements 2.6, 2.8**
     - Generate OllinAI events with combinations of present/empty service, commit_sha, deployer Labels; assert narrative contains non-empty values and omits empty ones
 
-  - [ ]* 7.7 Write property test for single-module non-correlation (Property 10)
+  - [x]* 7.7 Write property test for single-module non-correlation (Property 10)
     - **Property 10: Single-module non-correlation**
     - **Validates: Requirements 2.7**
     - Generate scenarios where only OllinAI events exist in the window with no matching other-module events; assert no CorrelatedIncident generated
