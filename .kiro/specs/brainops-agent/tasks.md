@@ -11,19 +11,19 @@
 ## Task 2: CockroachDB Schema and Database Client
 > depends on: Task 1
 
-- [~] 2.1 Create `migrations/001_initial_schema.sql` with full schema (checkpoints, incidents, incident_embeddings, resolutions, deployments, audit_log, cert_ledger) including RLS policies, TTL, and vector index
-- [~] 2.2 Create `src/db/client.ts` with connection pool setup, tenant_id session management, and health check method
-- [~] 2.3 Create `src/db/migrations.ts` with idempotent migration runner (runs on startup)
-- [~] 2.4 Create `src/db/queries/incidents.ts` with insert, query by node/namespace/time, and get-by-id methods
-- [~] 2.5 Create `src/db/queries/embeddings.ts` with insert and vector similarity search (cosine, with threshold filter)
-- [~] 2.6 Create `src/db/queries/resolutions.ts` with insert, query by incident, and update reuse_count
-- [~] 2.7 Create `src/db/queries/audit.ts` with insert and query methods
+- [x] 2.1 Create `migrations/001_initial_schema.sql` with full schema (checkpoints, incidents, incident_embeddings, resolutions, deployments, audit_log, cert_ledger) including RLS policies, TTL, and vector index
+- [x] 2.2 Create `src/db/client.ts` with connection pool setup, tenant_id session management, and health check method
+- [x] 2.3 Create `src/db/migrations.ts` with idempotent migration runner (runs on startup)
+- [x] 2.4 Create `src/db/queries/incidents.ts` with insert, query by node/namespace/time, and get-by-id methods
+- [x] 2.5 Create `src/db/queries/embeddings.ts` with insert and vector similarity search (cosine, with threshold filter)
+- [x] 2.6 Create `src/db/queries/resolutions.ts` with insert, query by incident, and update reuse_count
+- [x] 2.7 Create `src/db/queries/audit.ts` with insert and query methods
 
 ## Task 3: LangGraph Agent with Checkpointer
 > depends on: Task 2
 
-- [~] 3.1 Create `src/agent/state.ts` with AgentState annotation and all type interfaces
-- [~] 3.2 Create `src/agent/checkpointer.ts` that configures PostgresSaver with CockroachDB connection string
+- [x] 3.1 Create `src/agent/state.ts` with AgentState annotation and all type interfaces
+- [x] 3.2 Create `src/agent/checkpointer.ts` that configures PostgresSaver with CockroachDB connection string
 - [~] 3.3 Create `src/agent/nodes/receive.ts` — stores incident, generates embedding, transitions to search
 - [~] 3.4 Create `src/agent/nodes/search-memory.ts` — vector search + playbook lookup + node history
 - [~] 3.5 Create `src/agent/nodes/reason.ts` — calls Bedrock with context, returns reasoning chain
