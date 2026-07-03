@@ -1,0 +1,1 @@
+// Receive incident from NATS

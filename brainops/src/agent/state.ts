@@ -1,0 +1,1 @@
+// Agent state type definitions

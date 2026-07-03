@@ -1,0 +1,1 @@
+// Bedrock Titan embedding generation

@@ -1,0 +1,1 @@
+-- BrainOps CockroachDB schema — placeholder for Task 2

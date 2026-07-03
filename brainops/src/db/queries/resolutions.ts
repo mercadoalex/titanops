@@ -1,0 +1,1 @@
+// Resolution query methods
