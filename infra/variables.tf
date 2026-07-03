@@ -150,3 +150,71 @@ variable "enable_correlation" {
   type        = bool
   default     = true
 }
+
+# -----------------------------------------------------------------------------
+# Layer 2: Intelligence Layer (optional — adds BrainOps + CockroachDB)
+# -----------------------------------------------------------------------------
+
+variable "enable_brainops" {
+  description = "Deploy BrainOps agent (requires CockroachDB). Creates IRSA role and configures agent service account."
+  type        = bool
+  default     = false
+}
+
+variable "enable_cockroachdb" {
+  description = "Provision CockroachDB Serverless cluster for agent memory. Required if enable_brainops=true."
+  type        = bool
+  default     = false
+}
+
+variable "enable_nats" {
+  description = "Deploy NATS event bus in-cluster via Helm. Required for cross-module correlation."
+  type        = bool
+  default     = false
+}
+
+# -----------------------------------------------------------------------------
+# CockroachDB Configuration (only used if enable_cockroachdb=true)
+# -----------------------------------------------------------------------------
+
+variable "cockroachdb_api_key" {
+  description = "CockroachDB Cloud API key (from console.cockroachlabs.cloud). Sensitive."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "cockroachdb_plan" {
+  description = "CockroachDB cluster plan: SERVERLESS or DEDICATED"
+  type        = string
+  default     = "SERVERLESS"
+
+  validation {
+    condition     = contains(["SERVERLESS", "DEDICATED"], var.cockroachdb_plan)
+    error_message = "cockroachdb_plan must be SERVERLESS or DEDICATED."
+  }
+}
+
+variable "cockroachdb_spend_limit" {
+  description = "Monthly spend limit in cents for CockroachDB Serverless (0 = free tier only)"
+  type        = number
+  default     = 0
+
+  validation {
+    condition     = var.cockroachdb_spend_limit >= 0
+    error_message = "cockroachdb_spend_limit must be >= 0."
+  }
+}
+
+variable "cockroachdb_sql_user" {
+  description = "SQL username for BrainOps agent"
+  type        = string
+  default     = "brainops"
+}
+
+variable "cockroachdb_sql_password" {
+  description = "SQL password for BrainOps agent. Sensitive."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
