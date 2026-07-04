@@ -45,23 +45,23 @@
 ## Task 5: NATS Subscriber
 > depends on: Task 3
 
-- [~] 5.1 Create `src/nats/subscriber.ts` with connection, subscription to `titanops.correlation.incidents.>`, and reconnect logic
-- [~] 5.2 Create `src/nats/types.ts` with event deserialization from protobuf/JSON
-- [~] 5.3 Wire subscriber to agent graph: on incident received → invoke agent with tenant context
+- [x] 5.1 Create `src/nats/subscriber.ts` with connection, subscription to `titanops.correlation.incidents.>`, and reconnect logic
+- [x] 5.2 Create `src/nats/types.ts` with event deserialization from protobuf/JSON
+- [x] 5.3 Wire subscriber to agent graph: on incident received → invoke agent with tenant context
 
 ## Task 6: Embedding Pipeline
 > depends on: Task 2
 
-- [~] 6.1 Create `src/embeddings/generator.ts` using AWS Bedrock Titan Embeddings (1536 dimensions)
-- [~] 6.2 Create `src/embeddings/pipeline.ts` — incident narrative → embedding → store to CockroachDB
-- [~] 6.3 Add retry logic (3 attempts, exponential backoff) for embedding generation failures
+- [x] 6.1 Create `src/embeddings/generator.ts` using AWS Bedrock Titan Embeddings (1536 dimensions)
+- [x] 6.2 Create `src/embeddings/pipeline.ts` — incident narrative → embedding → store to CockroachDB
+- [x] 6.3 Add retry logic (3 attempts, exponential backoff) for embedding generation failures
 
 ## Task 7: Safety Layer
 > depends on: Task 1
 
-- [~] 7.1 Create `src/safety/rate-limiter.ts` with sliding window (10 calls/min per tenant)
-- [~] 7.2 Create `src/safety/circuit-breaker.ts` with configurable threshold and auto-pause
-- [~] 7.3 Create `src/safety/approval-gate.ts` with high-risk action detection and pending_approval writes
+- [x] 7.1 Create `src/safety/rate-limiter.ts` with sliding window (10 calls/min per tenant)
+- [x] 7.2 Create `src/safety/circuit-breaker.ts` with configurable threshold and auto-pause
+- [x] 7.3 Create `src/safety/approval-gate.ts` with high-risk action detection and pending_approval writes
 
 ## Task 8: CockroachDB Cloud Managed MCP Client
 > depends on: Task 1
