@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "brainops.fullname" . }}
+  labels:
+    {{- include "brainops.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "brainops.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "brainops.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "brainops.serviceAccountName" . }}
+      {{- end }}
+      containers:
+        - name: brainops
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: health
+              containerPort: {{ .Values.healthPort }}
+              protocol: TCP
+          env:
+            # CockroachDB
+            - name: COCKROACHDB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "brainops.fullname" . }}-secrets
+                  key: cockroachdb-uri
+            - name: COCKROACHDB_POOL_SIZE
+              value: {{ .Values.cockroachdb.poolSize | quote }}
+            # NATS
+            - name: NATS_URL
+              value: {{ .Values.nats.url | quote }}
+            - name: NATS_SUBJECT
+              value: {{ .Values.nats.subject | quote }}
+            # Bedrock LLM
+            - name: BEDROCK_REGION
+              value: {{ .Values.bedrock.region | quote }}
+            - name: BEDROCK_MODEL_ID
+              value: {{ .Values.bedrock.modelId | quote }}
+            - name: EMBEDDING_MODEL_ID
+              value: {{ .Values.bedrock.embeddingModelId | quote }}
+            # Safety
+            - name: RATE_LIMIT_PER_MINUTE
+              value: {{ .Values.safety.rateLimitPerMinute | quote }}
+            - name: CIRCUIT_BREAKER_THRESHOLD
+              value: {{ .Values.safety.circuitBreakerThreshold | quote }}
+            - name: CIRCUIT_BREAKER_WINDOW_MS
+              value: {{ .Values.safety.circuitBreakerWindowMs | quote }}
+            # Self-optimization
+            - name: SELF_OPTIMIZATION_ENABLED
+              value: {{ .Values.selfOptimization.enabled | quote }}
+            - name: SELF_OPTIMIZATION_CRON
+              value: {{ .Values.selfOptimization.cron | quote }}
+            - name: QUERY_LATENCY_THRESHOLD_MS
+              value: {{ .Values.selfOptimization.queryLatencyThresholdMs | quote }}
+            # CockroachDB Managed MCP
+            - name: MANAGED_MCP_ENDPOINT
+              value: {{ .Values.managedMcp.endpoint | quote }}
+            - name: MANAGED_MCP_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "brainops.fullname" . }}-secrets
+                  key: managed-mcp-api-key
+            # ccloud
+            - name: CCLOUD_CLUSTER_ID
+              value: {{ .Values.ccloud.clusterId | quote }}
+            - name: CCLOUD_SERVICE_ACCOUNT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "brainops.fullname" . }}-secrets
+                  key: ccloud-service-account-key
+            # General
+            - name: LOG_LEVEL
+              value: {{ .Values.logLevel | quote }}
+            - name: PORT
+              value: {{ .Values.healthPort | quote }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: health
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

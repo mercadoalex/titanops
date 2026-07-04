@@ -89,16 +89,16 @@
 ## Task 11: Helm Chart
 > depends on: Task 1
 
-- [~] 11.1 Create `helm/charts/brainops/Chart.yaml` and `values.yaml`
-- [~] 11.2 Create deployment.yaml with IRSA service account, resource limits, env vars from Secrets Manager
-- [~] 11.3 Create service.yaml for health endpoints
-- [~] 11.4 Add `brainops.enabled` toggle to umbrella chart values
+- [x] 11.1 Create `helm/charts/brainops/Chart.yaml` and `values.yaml`
+- [x] 11.2 Create deployment.yaml with IRSA service account, resource limits, env vars from Secrets Manager
+- [x] 11.3 Create service.yaml for health endpoints
+- [x] 11.4 Add `brainops.enabled` toggle to umbrella chart values
 
 ## Task 12: Tests
 > depends on: Task 3, Task 4, Task 7
 
-- [~] 12.1 Unit tests for agent state transitions (each node)
-- [~] 12.2 Unit tests for MCP tool input validation
-- [~] 12.3 Unit tests for rate limiter and circuit breaker
-- [~] 12.4 Integration test: full agent flow with test CockroachDB (docker-compose)
-- [~] 12.5 Integration test: checkpoint save/restore (simulate pod restart)
+- [x] 12.1 Unit tests for agent state transitions (each node)
+- [x] 12.2 Unit tests for MCP tool input validation
+- [x] 12.3 Unit tests for rate limiter and circuit breaker
+- [x] 12.4 Integration test: full agent flow with test CockroachDB (docker-compose)
+- [x] 12.5 Integration test: checkpoint save/restore (simulate pod restart)
