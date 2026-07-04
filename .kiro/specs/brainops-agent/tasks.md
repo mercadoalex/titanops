@@ -66,25 +66,25 @@
 ## Task 8: CockroachDB Cloud Managed MCP Client
 > depends on: Task 1
 
-- [~] 8.1 Create `src/mcp/managed-mcp.ts` with connection to cockroachlabs.cloud/mcp endpoint
-- [~] 8.2 Implement read-only query execution via Managed MCP
-- [~] 8.3 Implement schema discovery via Managed MCP
+- [x] 8.1 Create `src/mcp/managed-mcp.ts` with connection to cockroachlabs.cloud/mcp endpoint
+- [x] 8.2 Implement read-only query execution via Managed MCP
+- [x] 8.3 Implement schema discovery via Managed MCP
 
 ## Task 9: ccloud CLI Integration
 > depends on: Task 1
 
-- [~] 9.1 Create `src/ccloud/client.ts` with subprocess wrapper for ccloud commands (JSON output parsing)
-- [~] 9.2 Implement `clusterDescribe()` — verify cluster state is RUNNING
-- [~] 9.3 Implement `backupList()` — verify last backup within 24 hours
+- [x] 9.1 Create `src/ccloud/client.ts` with subprocess wrapper for ccloud commands (JSON output parsing)
+- [x] 9.2 Implement `clusterDescribe()` — verify cluster state is RUNNING
+- [x] 9.3 Implement `backupList()` — verify last backup within 24 hours
 
 ## Task 10: Self-Optimization
 > depends on: Task 2, Task 8
 
-- [~] 10.1 Create `src/self-optimization/scheduler.ts` with cron-based 6-hour cycle
-- [~] 10.2 Create `src/self-optimization/profiler.ts` — query crdb_internal.statement_statistics for slow queries
-- [~] 10.3 Create `src/self-optimization/range-analyzer.ts` — SHOW RANGES analysis for hotspots
-- [~] 10.4 Create `src/self-optimization/schema-risk.ts` — evaluate storage impact of proposed fixes
-- [~] 10.5 Create orchestrator that runs detect → diagnose → evaluate → recommend/fix cycle
+- [x] 10.1 Create `src/self-optimization/scheduler.ts` with cron-based 6-hour cycle
+- [x] 10.2 Create `src/self-optimization/profiler.ts` — query crdb_internal.statement_statistics for slow queries
+- [x] 10.3 Create `src/self-optimization/range-analyzer.ts` — SHOW RANGES analysis for hotspots
+- [x] 10.4 Create `src/self-optimization/schema-risk.ts` — evaluate storage impact of proposed fixes
+- [x] 10.5 Create orchestrator that runs detect → diagnose → evaluate → recommend/fix cycle
 
 ## Task 11: Helm Chart
 > depends on: Task 1
