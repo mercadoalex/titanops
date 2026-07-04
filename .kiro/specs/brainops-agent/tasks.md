@@ -34,13 +34,13 @@
 ## Task 4: Custom MCP Server
 > depends on: Task 2
 
-- [~] 4.1 Create `src/mcp/server.ts` with MCP server setup and tool registration
-- [~] 4.2 Create `src/mcp/tools/search-similar.ts` — generate embedding + vector search
-- [~] 4.3 Create `src/mcp/tools/query-history.ts` — filtered incident query
-- [~] 4.4 Create `src/mcp/tools/get-playbook.ts` — resolution lookup
-- [~] 4.5 Create `src/mcp/tools/execute-remediation.ts` — K8s action + audit write + approval gate
-- [~] 4.6 Create `src/mcp/tools/store-resolution.ts` — write resolution record
-- [~] 4.7 Create `src/mcp/tools/get-node-history.ts` — combined incident + audit query
+- [x] 4.1 Create `src/mcp/server.ts` with MCP server setup and tool registration
+- [x] 4.2 Create `src/mcp/tools/search-similar.ts` — generate embedding + vector search
+- [x] 4.3 Create `src/mcp/tools/query-history.ts` — filtered incident query
+- [x] 4.4 Create `src/mcp/tools/get-playbook.ts` — resolution lookup
+- [x] 4.5 Create `src/mcp/tools/execute-remediation.ts` — K8s action + audit write + approval gate
+- [x] 4.6 Create `src/mcp/tools/store-resolution.ts` — write resolution record
+- [x] 4.7 Create `src/mcp/tools/get-node-history.ts` — combined incident + audit query
 
 ## Task 5: NATS Subscriber
 > depends on: Task 3
