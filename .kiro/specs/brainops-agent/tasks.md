@@ -24,12 +24,12 @@
 
 - [x] 3.1 Create `src/agent/state.ts` with AgentState annotation and all type interfaces
 - [x] 3.2 Create `src/agent/checkpointer.ts` that configures PostgresSaver with CockroachDB connection string
-- [~] 3.3 Create `src/agent/nodes/receive.ts` — stores incident, generates embedding, transitions to search
-- [~] 3.4 Create `src/agent/nodes/search-memory.ts` — vector search + playbook lookup + node history
-- [~] 3.5 Create `src/agent/nodes/reason.ts` — calls Bedrock with context, returns reasoning chain
-- [~] 3.6 Create `src/agent/nodes/act.ts` — checks safety, executes remediation, writes audit
-- [~] 3.7 Create `src/agent/nodes/remember.ts` — stores resolution, updates playbook reuse_count
-- [~] 3.8 Create `src/agent/graph.ts` — assembles nodes into StateGraph, compiles with checkpointer
+- [x] 3.3 Create `src/agent/nodes/receive.ts` — stores incident, generates embedding, transitions to search
+- [x] 3.4 Create `src/agent/nodes/search-memory.ts` — vector search + playbook lookup + node history
+- [x] 3.5 Create `src/agent/nodes/reason.ts` — calls Bedrock with context, returns reasoning chain
+- [x] 3.6 Create `src/agent/nodes/act.ts` — checks safety, executes remediation, writes audit
+- [x] 3.7 Create `src/agent/nodes/remember.ts` — stores resolution, updates playbook reuse_count
+- [x] 3.8 Create `src/agent/graph.ts` — assembles nodes into StateGraph, compiles with checkpointer
 
 ## Task 4: Custom MCP Server
 > depends on: Task 2
