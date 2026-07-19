@@ -1,0 +1,36 @@
+# Scenario: Only one module reports - no cross-module correlation possible
+# Expected: zero incidents generated (correlation requires >= 2 distinct modules)
+
+name: "Single module - no incident generated"
+description: >
+  When only one module (Earthworm) reports multiple events on the same node,
+  the correlation engine should NOT generate any incidents because cross-module
+  correlation requires events from at least 2 distinct modules.
+
+inputs:
+  events:
+    - module: earthworm
+      event_type: heartbeat_degraded
+      node: node-01
+      pod: pod-abc
+      namespace: production
+      severity: high
+      timestamp: "2024-06-01T10:00:00Z"
+      payload: "{}"
+    - module: earthworm
+      event_type: anomaly_detected
+      node: node-01
+      pod: pod-abc
+      namespace: production
+      severity: medium
+      timestamp: "2024-06-01T10:00:30Z"
+      payload: "{}"
+  config:
+    time_window_seconds: 120
+    confidence_threshold: 80
+
+expected:
+  incidents_generated: 0
+  min_confidence: 0
+  max_confidence: 0
+  narrative_contains: []

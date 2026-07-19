@@ -1,17 +1,13 @@
 // Remember node — stores resolution playbook for future reuse
 
-import type { DbClient } from "../../db/client.js";
-import {
-  insertResolution,
-  incrementReuseCount,
-} from "../../db/queries/resolutions.js";
+import type { AgentStore } from "../ports.js";
 import type { AgentStateType } from "../state.js";
 
 /**
- * Factory that creates the remember node with injected DB dependency.
+ * Factory that creates the remember node with injected store dependency.
  * Stores the resolution as a playbook or increments the reuse count on an existing one.
  */
-export function createRememberNode(db: DbClient) {
+export function createRememberNode(store: AgentStore) {
   return async (state: AgentStateType): Promise<Partial<AgentStateType>> => {
     const { incident, action, outcome, playbook, tenantId } = state;
 
@@ -25,20 +21,16 @@ export function createRememberNode(db: DbClient) {
 
     if (playbook) {
       // Reusing an existing playbook — increment its reuse count
-      await db.withTenant(tenantId, (client) =>
-        incrementReuseCount(client, playbook.id),
-      );
+      await store.incrementReuseCount(tenantId, playbook.id);
     } else {
       // Store a new resolution playbook
-      await db.withTenant(tenantId, (client) =>
-        insertResolution(client, {
-          incidentId: incident.id,
-          tenantId,
-          actionSequence: [action],
-          success: outcome.success,
-          durationMs: outcome.durationMs,
-        }),
-      );
+      await store.insertResolution({
+        incidentId: incident.id,
+        tenantId,
+        actionSequence: [action],
+        success: outcome.success,
+        durationMs: outcome.durationMs,
+      });
     }
 
     return {

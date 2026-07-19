@@ -9,6 +9,7 @@ import { createReasonNode } from "./nodes/reason.js";
 import { createActNode } from "./nodes/act.js";
 import { createRememberNode } from "./nodes/remember.js";
 import { createDbClient } from "../db/client.js";
+import { createDbAgentStore } from "./store.js";
 import { loadConfig } from "../config/index.js";
 
 /**
@@ -24,16 +25,17 @@ export async function createAgentGraph(connectionString: string) {
   // Initialize checkpointer for durable state
   const checkpointer = await createCheckpointer(connectionString);
 
-  // Create DB client for node dependency injection
+  // Create DB client and wrap it in the AgentStore adapter
   const config = loadConfig();
   const db = createDbClient(config);
+  const store = createDbAgentStore(db);
 
-  // Build node functions via factories
-  const receiveNode = createReceiveNode(db);
-  const searchMemoryNode = createSearchMemoryNode(db);
-  const reasonNode = createReasonNode(db);
-  const actNode = createActNode(db);
-  const rememberNode = createRememberNode(db);
+  // Build node functions via factories — all receive the AgentStore interface
+  const receiveNode = createReceiveNode(store);
+  const searchMemoryNode = createSearchMemoryNode(store);
+  const reasonNode = createReasonNode(store);
+  const actNode = createActNode(store);
+  const rememberNode = createRememberNode(store);
 
   // Construct state graph
   const graph = new StateGraph(AgentState)

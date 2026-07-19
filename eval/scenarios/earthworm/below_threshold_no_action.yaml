@@ -1,0 +1,29 @@
+# Scenario: Normal metrics - AI score below threshold, no action taken
+# Expected: no remediation action, observation logged
+
+name: "Below threshold - no remediation"
+description: >
+  When the AI model returns a confidence score below the configured threshold,
+  the agent should log the observation without taking any remediation action.
+  This validates that the agent does not over-react to low-confidence anomalies.
+
+inputs:
+  heartbeat:
+    node_id: node-01
+    cpu_usage: 0.45
+    memory_usage: 0.50
+    disk_io: 0.30
+    network_io: 0.20
+    latency: 100.0
+  config:
+    threshold: 0.75
+    rule_thresholds:
+      cpu_threshold: 0.9
+      memory_threshold: 0.85
+      latency_threshold: 500
+  ai_score: 0.50
+
+expected:
+  action_taken: false
+  action_type: ""
+  was_rule_based: false

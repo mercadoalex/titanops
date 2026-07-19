@@ -1,0 +1,34 @@
+# Scenario: AI model unavailable, CPU exceeds rule threshold → rule-based detection
+# Expected: rule_based=true, action taken, score derived from CPU excess
+# Rule score formula: 0.75 + ((cpu - threshold) / (1.0 - threshold)) × 0.25
+# CPU=0.95, threshold=0.9 → excess = (0.95-0.9)/(1.0-0.9) = 0.5 → score = 0.75 + 0.125 = 0.875
+
+name: "AI unavailable - rule-based CPU fallback"
+description: >
+  When the AI model fails to load or times out, the agent falls back to
+  rule-based detection. With CPU usage above the CPU threshold (0.9),
+  the rule produces a synthetic score that triggers remediation.
+
+inputs:
+  heartbeat:
+    node_id: node-12
+    cpu_usage: 0.95
+    memory_usage: 0.50
+    disk_io: 0.30
+    network_io: 0.20
+    latency: 100.0
+  config:
+    threshold: 0.75
+    rule_thresholds:
+      cpu_threshold: 0.9
+      memory_threshold: 0.85
+      latency_threshold: 500
+  ai_score: null  # AI unavailable
+
+expected:
+  action_taken: true
+  action_type: pod_restart
+  was_rule_based: true
+  min_score: 0.85
+  max_score: 0.90
+  triggered_rule: cpu_threshold_exceeded

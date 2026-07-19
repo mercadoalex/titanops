@@ -1,16 +1,16 @@
 // Reason node — builds prompt context and produces a ReasoningResult via LLM
 
-import type { DbClient } from "../../db/client.js";
+import type { AgentStore } from "../ports.js";
 import type { AgentStateType, ReasoningResult, RemediationAction } from "../state.js";
 
 /**
- * Factory that creates the reason node with injected DB dependency.
+ * Factory that creates the reason node with injected store dependency.
  * Builds a prompt from the incident, similar incidents, and playbook context,
  * then calls the LLM to produce a ReasoningResult.
  *
  * NOTE: LLM integration is a placeholder — returns a mock result for now.
  */
-export function createReasonNode(_db: DbClient) {
+export function createReasonNode(_store: AgentStore) {
   return async (state: AgentStateType): Promise<Partial<AgentStateType>> => {
     const { incident, similarIncidents, playbook } = state;
 

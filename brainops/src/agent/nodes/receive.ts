@@ -1,14 +1,13 @@
-// Receive node — stores incident to DB and transitions to search_memory
+// Receive node — stores incident and transitions to search_memory
 
-import type { DbClient } from "../../db/client.js";
-import { insertIncident } from "../../db/queries/incidents.js";
+import type { AgentStore } from "../ports.js";
 import type { AgentStateType } from "../state.js";
 
 /**
- * Factory that creates the receive node function with injected DB dependency.
+ * Factory that creates the receive node with injected store dependency.
  * The receive node persists the incoming correlated incident and moves to search_memory.
  */
-export function createReceiveNode(db: DbClient) {
+export function createReceiveNode(store: AgentStore) {
   return async (state: AgentStateType): Promise<Partial<AgentStateType>> => {
     const { incident, tenantId } = state;
 
@@ -16,21 +15,19 @@ export function createReceiveNode(db: DbClient) {
       throw new Error("receive node: no incident in state");
     }
 
-    // Persist the incident to CockroachDB (tenant-scoped via RLS)
-    const incidentId = await db.withTenant(tenantId, (client) =>
-      insertIncident(client, {
-        tenantId,
-        correlationId: incident.id,
-        modules: incident.modules,
-        severity: incident.severity,
-        narrative: incident.narrative,
-        contributingEvents: incident.contributingEvents,
-        confidenceScore: incident.confidenceScore,
-        nodeId: incident.nodeId,
-        namespace: incident.namespace,
-        podName: incident.podName,
-      }),
-    );
+    // Persist the incident via the store interface
+    const incidentId = await store.insertIncident({
+      tenantId,
+      correlationId: incident.id,
+      modules: incident.modules,
+      severity: incident.severity,
+      narrative: incident.narrative,
+      contributingEvents: incident.contributingEvents,
+      confidenceScore: incident.confidenceScore,
+      nodeId: incident.nodeId,
+      namespace: incident.namespace,
+      podName: incident.podName,
+    });
 
     // Return updated state — embedding generation is wired in a later task
     return {

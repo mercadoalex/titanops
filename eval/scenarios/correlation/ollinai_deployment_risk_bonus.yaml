@@ -1,0 +1,42 @@
+# Scenario: OllinAI deployment risk event adds bonus to confidence
+# Expected: confidence boosted by deployment risk score (risk=80 → bonus=16)
+# Formula: 2 modules × 20 = 40 + 10 (node) + 10 (namespace) + 16 (risk bonus 80/5) = 76
+
+name: "OllinAI deployment risk bonus in correlation"
+description: >
+  When an OllinAI deployment_risk event with a high risk score is correlated
+  with another module's event, the confidence should include the deployment
+  risk bonus (risk_score / 5, capped at 20).
+
+inputs:
+  events:
+    - module: earthworm
+      event_type: heartbeat_degraded
+      node: node-03
+      pod: ""
+      namespace: staging
+      severity: high
+      timestamp: "2024-06-01T14:00:00Z"
+      payload: "{}"
+    - module: ollinai
+      event_type: deployment_risk
+      node: node-03
+      pod: ""
+      namespace: staging
+      severity: critical
+      timestamp: "2024-06-01T14:01:30Z"
+      payload: "{}"
+      labels:
+        risk_score: "80"
+  config:
+    time_window_seconds: 120
+    confidence_threshold: 100
+
+expected:
+  incidents_generated: 1
+  min_confidence: 76
+  max_confidence: 86
+  narrative_contains:
+    - "earthworm"
+    - "ollinai"
+    - "node"

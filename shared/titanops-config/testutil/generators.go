@@ -415,6 +415,37 @@ func Token() *rapid.Generator[string] {
 	})
 }
 
+// --- RunMode Generators ---
+
+// RunModes are the valid TITANOPS_MODE values.
+var RunModes = []string{"live", "mock", "dry-run"}
+
+// ValidRunMode generates a valid RunMode string value.
+func ValidRunMode() *rapid.Generator[string] {
+	return rapid.SampledFrom(RunModes)
+}
+
+// InvalidRunMode generates an invalid RunMode string that should be rejected.
+func InvalidRunMode() *rapid.Generator[string] {
+	return rapid.Custom[string](func(t *rapid.T) string {
+		invalid := []string{"Live", "MOCK", "DRY-RUN", "dryrun", "dry_run", "test", "staging", "prod", "debug", "off", "on", "true", "false", ""}
+		return rapid.SampledFrom(invalid).Draw(t, "invalidRunMode")
+	})
+}
+
+// AnyRunMode generates either a valid or invalid RunMode string for fuzz testing.
+func AnyRunMode() *rapid.Generator[string] {
+	return rapid.Custom[string](func(t *rapid.T) string {
+		all := []string{"live", "mock", "dry-run", "Live", "MOCK", "DRY-RUN", "dryrun", "dry_run", "invalid", "", "test"}
+		return rapid.SampledFrom(all).Draw(t, "anyRunMode")
+	})
+}
+
+// MockSeed generates a plausible mock seed value.
+func MockSeed() *rapid.Generator[int64] {
+	return rapid.Int64Range(0, 999999999)
+}
+
 // --- Confidence and Threshold Generators ---
 
 // ConfidenceScore generates a confidence score in [0.0, 1.0].

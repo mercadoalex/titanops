@@ -1,0 +1,30 @@
+# Scenario: AI detects anomaly above threshold - pod restart action
+# Expected: remediation triggered, pod_restart selected (default action)
+# selectAction: confidence < 0.9 or CPU < 0.9 → defaults to pod_restart
+
+name: "Above threshold - pod restart"
+description: >
+  When the AI model produces a score above the threshold with moderate metrics
+  (CPU not extreme, latency not high), the agent should execute a pod_restart
+  as the default remediation action.
+
+inputs:
+  heartbeat:
+    node_id: worker-03
+    cpu_usage: 0.70
+    memory_usage: 0.65
+    disk_io: 0.50
+    network_io: 0.40
+    latency: 200.0
+  config:
+    threshold: 0.75
+    rule_thresholds:
+      cpu_threshold: 0.9
+      memory_threshold: 0.85
+      latency_threshold: 500
+  ai_score: 0.82
+
+expected:
+  action_taken: true
+  action_type: pod_restart
+  was_rule_based: false

@@ -1,15 +1,14 @@
 // Act node — executes remediation or gates on approval for high-risk actions
 
-import type { DbClient } from "../../db/client.js";
-import { insertAuditEntry } from "../../db/queries/audit.js";
+import type { AgentStore } from "../ports.js";
 import type { AgentStateType, ActionOutcome } from "../state.js";
 
 /**
- * Factory that creates the act node with injected DB dependency.
+ * Factory that creates the act node with injected store dependency.
  * If the action is high-risk, transitions to awaiting_approval.
  * Otherwise executes the remediation and logs to the audit trail.
  */
-export function createActNode(db: DbClient) {
+export function createActNode(store: AgentStore) {
   return async (state: AgentStateType): Promise<Partial<AgentStateType>> => {
     const { action, reasoning, incident, tenantId } = state;
 
@@ -37,20 +36,18 @@ export function createActNode(db: DbClient) {
       durationMs: Date.now() - startTime,
     };
 
-    // Write to audit log
-    await db.withTenant(tenantId, (client) =>
-      insertAuditEntry(client, {
-        tenantId,
-        module: "brainops-agent",
-        actionType: action.actionType,
-        target: action.target,
-        triggerEventId: incident.id,
-        confidence: reasoning?.confidence ?? 0,
-        reasoning: reasoning ?? {},
-        outcome: outcome.success ? "success" : "failure",
-        durationMs: outcome.durationMs,
-      }),
-    );
+    // Write to audit log via store interface
+    await store.insertAudit({
+      tenantId,
+      module: "brainops-agent",
+      actionType: action.actionType,
+      target: action.target,
+      triggerEventId: incident.id,
+      confidence: reasoning?.confidence ?? 0,
+      reasoning: reasoning ?? {},
+      outcome: outcome.success ? "success" : "failure",
+      durationMs: outcome.durationMs,
+    });
 
     return {
       outcome,

@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	config "github.com/mercadoalex/titanops/shared/titanops-config"
 	"github.com/mercadoalex/titanops/correlation"
 	"github.com/mercadoalex/titanops/gateway"
 	ai "github.com/mercadoalex/titanops/shared/titanops-ai"
@@ -72,6 +73,13 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.Println("TitanOps Platform starting...")
 
+	// 0. Resolve run mode (live, mock, dry-run)
+	mode := config.MustCurrentMode()
+	log.Printf("Run mode: %s", mode)
+	if mode == config.ModeMock {
+		log.Printf("Mock seed: %d", config.MockSeed())
+	}
+
 	// 1. Load configuration
 	cfg := loadConfig()
 	log.Printf("Config: addr=%s, models=%s, window=%s, threshold=%d",
@@ -79,18 +87,31 @@ func main() {
 
 	// 2. Create AI provider (local ONNX inference, zero cloud dependencies)
 	var aiProvider ai.Provider
-	provider, err := ai.NewLocalProvider(cfg.ModelDir)
-	if err != nil {
-		log.Printf("WARN: AI provider unavailable (models dir: %s): %v", cfg.ModelDir, err)
-		log.Println("WARN: AI predictions will not be available until models are configured")
-	} else {
-		aiProvider = provider
-		log.Println("AI provider initialized (local ONNX)")
+	switch mode {
+	case config.ModeMock:
+		// In mock mode, AI provider is nil — predictions not needed for synthetic data
+		log.Println("AI provider: skipped (mock mode)")
+	default:
+		provider, err := ai.NewLocalProvider(cfg.ModelDir)
+		if err != nil {
+			log.Printf("WARN: AI provider unavailable (models dir: %s): %v", cfg.ModelDir, err)
+			log.Println("WARN: AI predictions will not be available until models are configured")
+		} else {
+			aiProvider = provider
+			log.Println("AI provider initialized (local ONNX)")
+		}
 	}
 
 	// 3. Create export adapters (fan-out telemetry to all configured backends)
-	exporter := createExporter(cfg.ExportConfig)
-	log.Println("Export adapters initialized")
+	var exporter export.Exporter
+	switch mode {
+	case config.ModeMock:
+		exporter = export.NewMultiExporter(&noOpBackend{name: "mock"})
+		log.Println("Export adapters: mock (no-op sink)")
+	default:
+		exporter = createExporter(cfg.ExportConfig)
+		log.Println("Export adapters initialized")
+	}
 
 	// 4. Create correlation engine (cross-module event correlation)
 	correlationCfg := correlation.EngineConfig{
@@ -103,7 +124,20 @@ func main() {
 		},
 	}
 
-	actionExecutor := &correlation.NoOpExecutor{} // Replace with real executor in production
+	// Select action executor based on mode
+	var actionExecutor correlation.ActionExecutor
+	switch mode {
+	case config.ModeMock:
+		actionExecutor = &correlation.NoOpExecutor{}
+		log.Println("Action executor: no-op (mock mode)")
+	case config.ModeDryRun:
+		actionExecutor = &dryRunExecutor{}
+		log.Println("Action executor: dry-run (actions logged, not executed)")
+	default:
+		actionExecutor = &correlation.NoOpExecutor{} // Replace with real executor when available
+		log.Println("Action executor: no-op (production executor not yet wired)")
+	}
+
 	engine, err := correlation.NewEngine(correlationCfg, exporter, actionExecutor)
 	if err != nil {
 		log.Fatalf("Failed to create correlation engine: %v", err)
@@ -240,3 +274,19 @@ type webhookBackend struct {
 func (b *webhookBackend) Name() string                                    { return "webhook" }
 func (b *webhookBackend) Send(_ context.Context, _ export.Event) error    { return nil }
 func (b *webhookBackend) IsEnabled() bool                                 { return true }
+
+// noOpBackend is a sink that discards all events. Used in mock mode.
+type noOpBackend struct{ name string }
+
+func (b *noOpBackend) Name() string                                 { return b.name }
+func (b *noOpBackend) Send(_ context.Context, _ export.Event) error { return nil }
+func (b *noOpBackend) IsEnabled() bool                              { return true }
+
+// dryRunExecutor logs actions without executing them. Used in dry-run mode.
+type dryRunExecutor struct{}
+
+func (d *dryRunExecutor) Execute(_ context.Context, action correlation.AutoAction, incident correlation.CorrelatedIncident) error {
+	log.Printf("[DRY-RUN] Would execute action: type=%s params=%v incident=%s confidence=%d",
+		action.Type, action.Parameters, incident.IncidentID, incident.ConfidenceScore)
+	return nil
+}
