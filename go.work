@@ -6,9 +6,11 @@ use (
 	./eval/runner
 	./gateway
 	./modules/earthworm
+	./modules/ebeecontrol
 	./modules/ollinai
 	./shared/titanops-ai
 	./shared/titanops-config
 	./shared/titanops-export
 	./shared/titanops-k8s
+	./shared/titanops-platform
 )

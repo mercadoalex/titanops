@@ -1,9 +1,0 @@
-node_modules
-src
-tests
-.git
-.gitignore
-dist
-*.md
-.DS_Store
-.vscode

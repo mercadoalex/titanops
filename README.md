@@ -37,37 +37,69 @@ eBPF (kernel observation) → AI (analysis/decision) → Autonomous Action
 |--------|--------|-------------|------|--------|
 | [**Earthworm**](https://github.com/mercadoalex/earthworm) 🪱 | Health | K8s cluster heartbeat monitoring via eBPF, anomaly detection & auto-remediation | Go · cilium/ebpf · ONNX | ✅ Active |
 | [**Tlapix**](https://github.com/mercadoalex/tlapix) 🦡 | Security | Autonomous TLS certificate lifecycle guardian — detect shadow certs, predict expiry, auto-renew | Rust · Aya · ONNX Runtime | ✅ Active |
-| [**eBeeControl**](https://github.com/mercadoalex/ebeecontrol) 🐝 | Threat | Autonomous deception engine — honeytokens, threat classification, pod isolation | TypeScript · Tetragon · Gemini | ✅ Active |
+| [**eBeeControl**](https://github.com/mercadoalex/ebeecontrol) 🐝 | Threat | Autonomous deception engine — honeytokens, threat classification, pod isolation | Go · Tetragon · titanops-ai | ✅ Active |
 | [**Quack**](https://github.com/mercadoalex/quack) 🦆 | Performance | AI-powered container CPU scheduling via sched_ext | Go · sched_ext · ONNX | ✅ Active |
-| [**OllinAI**](https://github.com/mercadoalex/OllinAI-) 🔮 | Change Intelligence | Deployment risk scoring, DORA metrics, incident correlation, CI/CD supply chain security | TypeScript · Rust · Next.js · AWS | 🚧 Under Construction |
+| [**OllinAI**](https://github.com/mercadoalex/OllinAI-) 🔮 | Change Intelligence | Deployment risk scoring, DORA metrics, incident correlation, CI/CD supply chain security | Go · AWS | 🚧 Under Construction |
 
 ---
 
 ## Technical Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                        TitanOps Platform Core                         │
-│                                                                       │
-│  cmd/titanops ─── Correlation Engine ─── API Gateway ─── Dashboard   │
-│       │                    │                   │              │        │
-│       │            NATS Event Bus              │         React 18     │
-│       │           (in-cluster pub/sub)         │         Vite 5       │
-│       │                    │                   │              │        │
-│  ┌────┴────────────────────┴───────────────────┴──────────────┘       │
-│  │              Shared Go Libraries                                   │
-│  │  titanops-ai · titanops-k8s · titanops-export · titanops-config   │
-│  └────────────────────────────────────────────────────────────────── │
-└──────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         TitanOps Platform Core                           │
+│                                                                          │
+│  cmd/titanops ─── RuntimeKernel ─── Correlation Engine ─── API Gateway  │
+│       │                │                    │                   │         │
+│       │        Module Lifecycle             │              Dashboard     │
+│       │       (Start/Stop/Health)    NATS Event Bus        React 18     │
+│       │                │                    │              Vite 5        │
+│  ┌────┴────────────────┴────────────────────┴───────────────────┘        │
+│  │                    Shared Go Libraries                                │
+│  │  titanops-platform · titanops-ai · titanops-k8s                       │
+│  │  titanops-export · titanops-config                                    │
+│  └──────────────────────────────────────────────────────────────────── │
+└─────────────────────────────────────────────────────────────────────────┘
          │              │               │              │           │
     Earthworm       Tlapix        eBeeControl       Quack      OllinAI
-      (Go)          (Rust)       (TS → Go)          (Go)     (TS+Rust)
+      (Go)          (Rust)          (Go)            (Go)        (Go)
          │              │               │              │           │
     ┌────┴──────────────┴───────────────┴──────────────┴───────────┘
     │                    Linux Kernel (eBPF)                         │
     │  cilium/ebpf · Aya · Tetragon · sched_ext · libbpf            │
     └───────────────────────────────────────────────────────────────┘
 ```
+
+### Platform Kernel (Module/Kernel Contract)
+
+Every module implements a formal `platform.Module` interface. The kernel manages lifecycle with fault isolation:
+
+```go
+// Every module satisfies this contract:
+type Module interface {
+    ID() string
+    Version() string
+    Start(ctx context.Context, kernel Kernel) error
+    Stop(ctx context.Context) error
+    HealthCheck(ctx context.Context) HealthStatus
+}
+
+// The kernel provides shared services:
+type Kernel interface {
+    Emit(ctx context.Context, event export.Event) error
+    Subscribe(filter EventFilter, handler EventHandler) Subscription
+    K8sClient() k8s.Client
+    AIProvider() ai.Provider
+    ModuleConfig(moduleID string) json.RawMessage
+    GetModule(id string) Module
+}
+```
+
+Benefits:
+- **Panic isolation** — a crashing module never takes down the platform
+- **Unified health** — `/api/modules/health` aggregates all module status
+- **Shared services** — one K8s client, one AI provider, one event bus
+- **Compile-time safety** — modules are Go packages, not dynamic plugins
 
 ### Data Flow
 
@@ -76,7 +108,7 @@ Kernel eBPF → Userspace Decode → Local AI Inference → Decision → Action
                                                           │
                                                      Event Emit
                                                           │
-                                                   NATS Event Bus
+                                              Platform Kernel (routing)
                                                           │
                                                  Correlation Engine
                                                     │         │
@@ -92,7 +124,8 @@ Kernel eBPF → Userspace Decode → Local AI Inference → Decision → Action
 
 | Component | Purpose | Tech |
 |-----------|---------|------|
-| `cmd/titanops` | Platform entry point — wires all components | Go |
+| `cmd/titanops` | Platform entry point — creates kernel, registers modules, starts all | Go |
+| `shared/titanops-platform` | Module/Kernel contract + RuntimeKernel implementation | Go |
 | `correlation/` | Cross-module event correlation, confidence scoring, auto-actions | Go, NATS, Protobuf |
 | `gateway/` | REST API serving decisions, actions, audit trail | Go, net/http |
 | `dashboard/` | Autonomous operations command center | React 18, TypeScript, Vite 5 |
@@ -112,6 +145,25 @@ Kernel eBPF → Userspace Decode → Local AI Inference → Decision → Action
 | 3 (optional) | LLM (Gemini, Claude, GPT) | $$$ | Natural language explanations, incident reports |
 
 The hot path (inference → decision → action) **never** depends on network calls. Cloud is only for offline training and optional enrichment.
+
+---
+
+## Language Strategy
+
+**Target: Go everywhere except Rust where eBPF demands it, TypeScript only for the dashboard.**
+
+| Layer | Language | Rationale |
+|-------|----------|-----------|
+| Platform core | Go | Single binary, goroutines, client-go native |
+| All modules (except Tlapix) | Go | Shared libs work directly, one toolchain |
+| Tlapix eBPF probes | Rust | Aya requires Rust for eBPF programs |
+| Dashboard | TypeScript/React | Standard for frontend |
+
+This eliminates:
+- `node_modules` from any backend service
+- Multi-language Docker images
+- Duplicate dependency management across ecosystems
+- Context switching between TypeScript and Go patterns
 
 ---
 
@@ -183,7 +235,7 @@ helm install earthworm titanops/earthworm
 git clone https://github.com/mercadoalex/titanops.git
 cd titanops
 
-# Build all Go modules
+# Build all Go modules (including ebeecontrol, earthworm, platform)
 go work sync
 go build ./...
 
@@ -192,6 +244,9 @@ go test -race ./...
 
 # Run property-based tests
 go test -run Property ./... -count=1
+
+# Run the platform locally
+go run ./cmd/titanops
 
 # Dashboard development
 cd dashboard && npm install && npm run dev
@@ -203,27 +258,30 @@ cd dashboard && npm install && npm run dev
 
 ```
 titanops/
-├── cmd/titanops/          # Platform entry point (main.go)
-├── correlation/           # Cross-module correlation engine
-├── gateway/               # REST API gateway
-├── dashboard/             # React command center UI
+├── cmd/titanops/              # Platform entry point (kernel + modules + gateway)
+├── correlation/               # Cross-module correlation engine
+├── gateway/                   # REST API gateway
+├── dashboard/                 # React command center UI
 ├── modules/
-│   └── earthworm/         # Heartbeat monitoring module
+│   ├── earthworm/             # Heartbeat monitoring module (platform.Module)
+│   ├── ebeecontrol/           # Deception engine module (platform.Module)
+│   └── ollinai/               # Deployment risk module (platform.Module)
 ├── shared/
-│   ├── titanops-ai/       # ONNX + pluggable cloud AI
-│   ├── titanops-k8s/      # Common K8s patterns
-│   ├── titanops-export/   # Multi-backend export (Prometheus, OTLP, etc.)
-│   └── titanops-config/   # Config loading & validation
+│   ├── titanops-platform/     # Module/Kernel contract + RuntimeKernel
+│   ├── titanops-ai/           # ONNX + pluggable cloud AI
+│   ├── titanops-k8s/          # Common K8s patterns
+│   ├── titanops-export/       # Multi-backend export (Prometheus, OTLP, etc.)
+│   └── titanops-config/       # Config loading & validation
 ├── helm/
-│   ├── titanops/          # Umbrella Helm chart
-│   └── charts/            # Module sub-charts
-├── grafana/               # Pre-built dashboard JSON files
-├── proto/                 # Protobuf event schema definitions
-├── docs/                  # Platform documentation
-├── infra/                 # Infrastructure definitions
-├── scripts/               # Build & release scripts
-├── go.work                # Go workspace (multi-module)
-└── VERSIONING.md          # Semver policy
+│   ├── titanops/              # Umbrella Helm chart
+│   └── charts/                # Module sub-charts
+├── grafana/                   # Pre-built dashboard JSON files
+├── proto/                     # Protobuf event schema definitions
+├── docs/                      # Platform documentation
+├── infra/                     # Infrastructure definitions
+├── scripts/                   # Build & release scripts
+├── go.work                    # Go workspace (multi-module)
+└── VERSIONING.md              # Semver policy
 ```
 
 ---
@@ -231,12 +289,15 @@ titanops/
 ## Key Principles
 
 1. **Pipeline-first** — All data flows as: eBPF Event → Decode → Infer → Decide → Act → Emit → Export
-2. **Lock-free hot path** — No mutexes between kernel event and action execution
-3. **Zero-copy internally** — Pass struct pointers through pipeline, serialize only at boundaries
-4. **Batch at boundaries** — Accumulate events, flush in batches to export backends
-5. **Idempotent exports** — Every event has a UUID; backends can deduplicate safely
-6. **Graceful degradation** — Cloud AI down → local ONNX → rule-based fallback
-7. **Vendor-neutral** — Customer picks their observability backend; we export to all of them
+2. **Module contract** — Every module implements `platform.Module`; the kernel manages lifecycle
+3. **Fault isolation** — A panicking module is caught and reported, never propagated
+4. **Lock-free hot path** — No mutexes between kernel event and action execution
+5. **Zero-copy internally** — Pass struct pointers through pipeline, serialize only at boundaries
+6. **Batch at boundaries** — Accumulate events, flush in batches to export backends
+7. **Idempotent exports** — Every event has a UUID; backends can deduplicate safely
+8. **Graceful degradation** — Cloud AI down → local ONNX → rule-based fallback
+9. **Vendor-neutral** — Customer picks their observability backend; we export to all of them
+10. **Go-first** — One language for the backend eliminates toolchain sprawl
 
 ---
 
@@ -253,11 +314,12 @@ titanops/
 
 ## Contributing
 
-1. Each module lives in its own repo — contribute to the module directly
+1. All backend modules live in this monorepo under `modules/`
 2. Platform-level work (correlation, gateway, dashboard, shared libs) lives here
 3. Run `go test -race ./...` before submitting PRs
 4. Property-based tests are mandatory for correctness-critical code
-5. See [Engineering Standards](docs/engineering-standards.md) for the full quality bar
+5. New modules must implement `platform.Module` — see `modules/earthworm/module.go` for the pattern
+6. See [Engineering Standards](docs/engineering-standards.md) for the full quality bar
 
 ---
 
