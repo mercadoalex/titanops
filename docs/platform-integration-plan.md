@@ -14,10 +14,11 @@ We don't compete with observability platforms. We add autonomous capabilities th
 
 | Module | Domain | What It Does | Tech |
 |--------|--------|-------------|------|
-| **Earthworm** | Health | K8s cluster heartbeat monitoring via eBPF | Go + TypeScript + C |
-| **Tlapix** | Security/Compliance | Autonomous TLS certificate lifecycle guardian | Rust + Aya |
-| **eBeeControl** | Threat Detection | Autonomous deception engine (honeytokens) | TypeScript + Gemini |
-| **Quack** | Performance | AI-powered container CPU scheduling | Go + sched_ext |
+| **Earthworm** | Health | K8s cluster heartbeat monitoring via eBPF | Go · cilium/ebpf · ONNX |
+| **Tlapix** | Security/Compliance | Autonomous TLS certificate lifecycle guardian | Rust · Aya · ONNX Runtime |
+| **eBeeControl** | Threat Detection | Autonomous deception engine (honeytokens) | Go · Tetragon · titanops-ai |
+| **Quack** | Performance | AI-powered container CPU scheduling | Go · sched_ext · ONNX |
+| **OllinAI** | Change Intelligence | Deployment risk scoring, DORA metrics, verification | Go (planned) |
 
 All four share the same architecture pattern:
 
@@ -289,16 +290,32 @@ The open source modules drive adoption. The correlation engine drives revenue.
 
 ---
 
-## Architecture Decision: Keep Projects Separate
+## Architecture Decision: Monorepo with Module/Kernel Contract
 
-The four projects use different languages (Rust, Go, TypeScript). Don't rewrite them. Connect them via:
+All backend modules now live in the `titanops/` monorepo under `modules/`. Each module implements the `platform.Module` interface and is managed by the `RuntimeKernel`. External repos (tlapix, quack) may still exist independently but the canonical platform implementation lives here.
 
-1. **Shared event schema** (protobuf or JSON with common fields)
-2. **OTLP as the universal transport** (all modules emit, any backend consumes)
-3. **Umbrella Helm chart** (installs sub-charts as dependencies)
-4. **Correlation service** (new, small, reads from all four)
+### What Lives Where
 
-Each project continues to evolve independently. The platform is the orchestration layer on top.
+| Location | What | Why |
+|----------|------|-----|
+| `modules/earthworm/` | Heartbeat monitoring | Platform module, uses shared libs |
+| `modules/ebeecontrol/` | Deception engine | Platform module, uses shared libs |
+| `modules/ollinai/` | Deployment verification | Platform module, uses shared libs |
+| `shared/titanops-platform/` | Module/Kernel contract | Defines how modules integrate |
+| `shared/titanops-ai/` | AI inference | Shared by all modules |
+| `shared/titanops-k8s/` | K8s client | Shared by all modules |
+| `shared/titanops-export/` | Multi-backend export | Shared by all modules |
+| `shared/titanops-config/` | Config loading | Shared by all modules |
+| `cmd/titanops/` | Entry point | Creates kernel, registers modules, starts platform |
+| External: `tlapix/` | Rust eBPF probes | Different language, integrated via Helm + export |
+
+### Key Rules
+
+1. **Shared libraries NEVER import modules** — dependency flows one way only
+2. **Every module implements `platform.Module`** — unified lifecycle management
+3. **Modules communicate only via the event bus** — never import each other
+4. **One `go build ./...` compiles everything** — verified in CI
+5. **go.work ties all modules together** — workspace-level build coherence
 
 ---
 
@@ -319,9 +336,9 @@ Each module uses a different AI approach, creating vendor lock-in and inconsiste
 | Module | Current AI/ML | Dependency |
 |--------|--------------|-----------|
 | Tlapix | ONNX Runtime (local) | None (correct approach) |
-| eBeeControl | Gemini (Google Cloud) | Requires Google Cloud |
+| eBeeControl | titanops-ai (local ONNX + optional cloud) | None (rewritten in Go) |
 | Quack | Splunk AITK | Requires Splunk |
-| Earthworm | Server-side rules | No real ML |
+| Earthworm | ONNX via titanops-ai | None |
 
 Four modules, three different AI strategies, two vendor lock-ins. That's not a platform.
 
@@ -511,61 +528,28 @@ We're not sending numbers. We're sending **decisions with explanations** that no
 
 ---
 
-## Language Strategy: Consolidation Plan
+## Language Strategy: Consolidation ✅ COMPLETED
 
-### Current State
+### Current State (After Consolidation)
 
-| Module | Language | Justification |
-|--------|----------|---------------|
-| Tlapix | Rust | eBPF via Aya, memory safety, kernel-level performance — no alternative |
-| Earthworm | Go + TypeScript | Go for server/eBPF (cilium/ebpf), TypeScript for React visualizer |
-| eBeeControl | TypeScript | Fast prototyping, Gemini SDK — but no strong justification for backend |
-| Quack | Go | sched_ext integration, kernel proximity, client-go for K8s |
+| Module | Language | Status |
+|--------|----------|--------|
+| Tlapix | Rust | eBPF via Aya — no alternative, stays |
+| Earthworm | Go | Implements `platform.Module` ✅ |
+| eBeeControl | Go | **Rewritten from TypeScript** ✅, implements `platform.Module` ✅ |
+| Quack | Go | sched_ext integration |
+| OllinAI | Go (planned) | Under construction |
+| Dashboard | TypeScript/React | Frontend only |
 
-### The Problem with eBeeControl in TypeScript
+### What Was Done
 
-eBeeControl is the odd one out. It's a backend agent that:
-- Monitors kernel-level file access (Tetragon/eBPF)
-- Deploys honeytokens into Kubernetes pods
-- Makes autonomous threat classification decisions
-- Responds by isolating pods and blocking IPs
+- eBeeControl rewritten as `modules/ebeecontrol/` (12 Go files, 2,749 lines)
+- Created `shared/titanops-platform/` — formal Module/Kernel contract
+- Both Earthworm and eBeeControl implement `platform.Module`
+- `cmd/titanops/main.go` uses `RuntimeKernel` to manage all module lifecycle
+- All modules share `titanops-ai`, `titanops-k8s`, `titanops-export`, `titanops-config`
 
-None of these require TypeScript. The choice was made for prototyping speed, not architectural fit. In the TitanOps platform context, this creates:
-- A different build system (npm vs go build)
-- A different test framework (Vitest vs go test)
-- No code sharing with Earthworm/Quack (which do similar K8s + eBPF work in Go)
-- A different deployment pattern (Node.js runtime vs static binary)
-
-### Decision: Rewrite eBeeControl Core in Go
-
-**Priority: Important (Phase 2-3 of platform integration)**
-
-**What to rewrite:**
-- Agent orchestrator (currently TypeScript)
-- Tetragon event processing (currently TypeScript)
-- Threat classifier (currently TypeScript + Gemini)
-- Response planner (currently TypeScript)
-- Kubernetes interactions (currently TypeScript)
-
-**What to keep or adapt:**
-- The architecture and design (proven, well-tested)
-- The 24 property-based correctness properties (reimplement in Go)
-- The Gemini integration (as optional cloud backend, not required)
-
-**Why Go:**
-- 3 of 4 modules will be Go (Earthworm, Quack, eBeeControl) — shared libraries possible
-- cilium/ebpf for Tetragon integration (same as Earthworm)
-- client-go for Kubernetes (same as Quack)
-- Static binary deployment (same as all other modules)
-- onnxruntime-go for local AI inference (unified AI layer)
-- Consistent CI/CD (go test, go build, single Dockerfile pattern)
-
-**What this gives TitanOps:**
-- Rust for kernel-critical eBPF (Tlapix) — justified, stays
-- Go for all platform services (Earthworm, eBeeControl, Quack, correlation engine, API gateway)
-- TypeScript for UI only (TitanOps React Dashboard, Earthworm visualizer)
-
-### Target Architecture After Consolidation
+### Target Architecture (Achieved)
 
 ```
 TitanOps Platform
@@ -573,44 +557,23 @@ TitanOps Platform
 │   └── Tlapix eBPF programs (Aya) — stays Rust, no change
 │
 ├── Platform Layer (Go)
-│   ├── Earthworm agent + server
-│   ├── eBeeControl agent (REWRITTEN from TypeScript)
+│   ├── Earthworm agent (platform.Module) ✅
+│   ├── eBeeControl agent (platform.Module) ✅
 │   ├── Quack scheduler service
-│   ├── Correlation engine (NEW)
-│   ├── TitanOps API gateway (NEW)
+│   ├── OllinAI deployment verification (planned)
+│   ├── Correlation engine ✅
+│   ├── TitanOps API gateway ✅
+│   ├── RuntimeKernel (module lifecycle) ✅
 │   └── Shared libraries:
-│       ├── titanops-ai (ONNX inference, pluggable cloud backends)
-│       ├── titanops-k8s (common K8s client patterns)
-│       ├── titanops-ebpf (common eBPF event handling)
-│       └── titanops-export (Prometheus, OTLP, webhooks)
+│       ├── titanops-platform (Module/Kernel contract) ✅
+│       ├── titanops-ai (ONNX inference, pluggable cloud backends) ✅
+│       ├── titanops-k8s (common K8s client patterns) ✅
+│       ├── titanops-export (Prometheus, OTLP, webhooks) ✅
+│       └── titanops-config (Unified config loading) ✅
 │
 └── UI Layer (TypeScript/React)
-    ├── TitanOps Dashboard (NEW)
-    └── Earthworm Visualizer (existing)
+    └── TitanOps Dashboard
 ```
-
-### Shared Go Libraries (Enabled by Consolidation)
-
-Once eBeeControl is in Go, these shared libraries become possible:
-
-| Library | What It Provides | Used By |
-|---------|-----------------|---------|
-| `titanops-ai` | ONNX inference, model loading, cloud backend interface | All modules |
-| `titanops-k8s` | K8s client, secret reading, pod operations | eBeeControl, Quack, Earthworm |
-| `titanops-ebpf` | Event parsing, ring buffer reading, map operations | eBeeControl, Earthworm, Quack |
-| `titanops-export` | Prometheus metrics, OTLP export, webhook dispatch | All modules |
-| `titanops-config` | Unified config loading, validation | All modules |
-
-This eliminates the duplication where each module reimplements the same patterns independently.
-
-### Timeline
-
-| Phase | Action |
-|-------|--------|
-| Now | Keep eBeeControl in TypeScript (it works, it's tested) |
-| Phase 2 | Design the Go shared libraries based on common patterns across modules |
-| Phase 3 | Rewrite eBeeControl core in Go, using shared libraries |
-| Phase 4 | All Go modules share titanops-* libraries |
 
 
 ---
@@ -995,3 +958,183 @@ This does NOT replace the ONNX model. It augments it as a secondary enrichment l
 - [Finding the Unknown Unknowns in Cybersecurity](https://medium.com/@jeffrey.sam/finding-the-unknown-unknowns-in-cybersecurity-7fdc6a63652d) — Jeffrey Sam, 2025
 - [BigQuery Vector Search implementation](https://github.com/pvotal-tech/bigquery-vector-search-2025)
 - [BETH cybersecurity dataset](https://www.kaggle.com/datasets/katehighnam/beth-dataset) — BPF log records for training/validation
+
+---
+
+## Phase 7: Competitive Intelligence & Platform Hardening (Metoro-Inspired)
+
+### Context
+
+Analysis of [Metoro.io](https://metoro.io) (AI SRE Agent for Kubernetes) reveals capabilities that validate our market thesis while highlighting areas where TitanOps can strengthen its position. Metoro collects full telemetry (logs, metrics, traces, profiling) via eBPF and uses AI to detect issues, investigate alerts, verify deployments, and open fix PRs.
+
+**Key insight:** Metoro attacks from the observability side (see everything, suggest fixes). TitanOps attacks from the autonomy side (fix things, report what happened). These are complementary, not competitive.
+
+### 7.1 OllinAI: AI Deployment Verification (High Priority)
+
+**Inspired by:** Metoro's deployment verification that returns a verdict in under 60 seconds.
+
+Build OllinAI as the deployment risk module using this 4-step pattern:
+
+| Step | What | How |
+|------|------|-----|
+| 1. Detect change | Watch for image tag, env var, replica, probe, or rollout-strategy diffs | K8s watch on Deployments/StatefulSets/DaemonSets |
+| 2. Plan checks | Classify change type and select signals to compare | Rules engine: image→error rate+latency, env→config branches+restarts, resource→throttling+OOM |
+| 3. Run verification | Compare pre/post telemetry across live traffic | Baseline window (5min before) vs post-deploy window (1-2min after) |
+| 4. Return verdict | Healthy / Regression / Inconclusive with evidence | Emit event to correlation engine + send notification |
+
+**Change classification matrix:**
+
+| Change Type | Signals to Check | Check Window | Severity |
+|-------------|-----------------|--------------|----------|
+| Image / code | Error rate, new error types, latency, downstream regressions | 30-90s | High |
+| Env var | Affected paths, config-driven branches, restart loops | 20-60s | High |
+| Resource limits | CPU throttling, OOMKills, p99 latency | 60-120s | Medium |
+| Replica scale | Per-pod warmup, cache hit recovery, downstream load | 20s | Low |
+| Probe change | Liveness/readiness flapping, traffic loss | 30-60s | High |
+| Rollout strategy | Surge/unavailable behavior during rollout | rollout duration | Medium |
+
+**Implementation:** Go module at `modules/ollinai/`, implements `platform.Module`, emits `deployment_verification` events.
+
+**Timeline:** 3-4 weeks
+
+### 7.2 Evidence Trail for Every Autonomous Action (High Priority)
+
+**Inspired by:** Metoro's evidence trail where every verdict is fully sourced with the checks that ran, baselines, post-deploy values, and underlying signals.
+
+Extend the `ForensicReport` pattern (currently in eBeeControl only) to all modules:
+
+| Module | Autonomous Actions | Evidence Trail Needed |
+|--------|-------------------|---------------------|
+| Earthworm | Pod restart, node cordon, workload reschedule | Heartbeat metrics, anomaly score, rule/AI path, action outcome |
+| eBeeControl | Pod isolation, IP block, honeytoken deploy | Access event, threat inputs, classification reasoning, response result |
+| Quack | CPU rebalance, priority adjustment | Scheduling metrics, model confidence, before/after latency |
+| OllinAI | Rollback PR, alert | Pre/post telemetry comparison, change diff, signal baselines |
+
+**Structure:** Each module's `ResponseAction` (or equivalent) must include:
+- What triggered it (input data)
+- What was decided (reasoning chain)
+- What was done (action taken)
+- What happened (outcome measurement)
+- How to investigate (link to relevant logs/metrics)
+
+**Implementation:** Add `EvidenceTrail` struct to `shared/titanops-platform`, require all modules to populate it on every autonomous action.
+
+**Timeline:** 1-2 weeks
+
+### 7.3 Slack/Teams Notification with Context (Medium Priority)
+
+**Inspired by:** Metoro's Slack threads that show change detected → reason → ETA → verdict with one-click drill-down.
+
+When TitanOps takes an autonomous action, the notification should include:
+
+```
+🚨 TitanOps | eBeeControl | Critical Threat Detected
+
+Pod: api-server-7b4c (production/payments)
+Action: Pod isolated + IP blocked
+Classification: Critical (production + anomaly 0.92 + criticality 5)
+Confidence: 97%
+
+Evidence:
+• Honeytoken /var/run/secrets/token accessed by unknown process (PID 4521)
+• Process binary: /tmp/.hidden/scanner
+• Namespace: production (criticality 5, anomaly score 0.92)
+
+Timeline:
+  14:32:01 — Honeytoken access detected
+  14:32:01 — Threat classified as critical
+  14:32:02 — Pod isolated (NetworkPolicy applied)
+  14:32:03 — IP blocked
+  14:32:04 — 2 additional honeytokens deployed
+
+[View Full Evidence] [Override Action] [Mark False Positive]
+```
+
+**Implementation:**
+- Add webhook notification adapter to `shared/titanops-export` (Slack/Teams/PagerDuty)
+- Template system for formatting evidence trails into rich Slack blocks
+- Buttons for override/false-positive that feed back to the learning loop
+
+**Timeline:** 1-2 weeks
+
+### 7.4 TitanOps MCP Server (Medium Priority)
+
+**Inspired by:** Metoro's MCP server that lets AI assistants query K8s cluster state, logs, and events.
+
+Rewrite BrainOps as a single Go MCP server that exposes TitanOps platform data to AI agents (Claude, GPT, Gemini, etc.):
+
+| MCP Tool | What It Exposes | Use Case |
+|----------|----------------|----------|
+| `get_module_health` | All module health status | AI investigates platform health |
+| `get_recent_incidents` | Correlated incidents from the correlation engine | AI analyzes incident patterns |
+| `get_audit_trail` | Autonomous decision history | AI explains why actions were taken |
+| `get_deployment_verdicts` | OllinAI deployment verification results | AI investigates deploy regressions |
+| `search_events` | Query the event store by time/module/severity | AI finds relevant events during investigation |
+| `get_honeytoken_map` | Active honeytoken positions and status | AI understands deception coverage |
+| `explain_action` | Full evidence trail for any autonomous action | AI provides natural-language explanation to humans |
+
+**Implementation:** Single Go binary using `metoro-io/mcp-golang` (1.2k stars, already a proven Go MCP framework). Replaces the entire TypeScript `brainops/` directory.
+
+**Timeline:** 2-3 weeks
+
+### 7.5 5-Minute Install Goal (Medium Priority)
+
+**Inspired by:** Metoro's "One Helm install. No code changes. Operational in under 5 minutes" narrative.
+
+Target for TitanOps umbrella chart:
+
+| Time | Milestone |
+|------|-----------|
+| 0:00 | `helm install titanops titanops/titanops` |
+| 0:30 | DaemonSet ready, kernel hooked (eBPF probes loaded) |
+| 1:00 | Modules registered, kernel started |
+| 2:00 | Discovery cycle complete, honeytokens deployed, heartbeat monitoring active |
+| 3:00 | First events flowing to correlation engine |
+| 5:00 | Dashboard accessible, autonomous actions enabled |
+
+**Requirements:**
+- Zero mandatory config (sane defaults for everything)
+- Auto-detect cluster capabilities (Tetragon available? Cilium present? etc.)
+- Single `values.yaml` with module toggles, everything else optional
+- Health endpoint passes within 60 seconds
+
+**Timeline:** 1-2 weeks (after Helm chart stabilization)
+
+### 7.6 Kill BrainOps TypeScript (Low Priority — Replaced by 7.4)
+
+The TypeScript `brainops/` directory (LangGraph agent, NATS subscriber, MCP server) is eliminated by implementing 7.4 (TitanOps MCP Server in Go). This removes the last TypeScript backend from the monorepo.
+
+**What gets replaced:**
+- `brainops/src/agent/` → Correlation engine + `titanops-ai` handles reasoning
+- `brainops/src/mcp/` → New Go MCP server (7.4)
+- `brainops/src/nats/` → Kernel's event routing handles subscription
+- `brainops/src/self-optimization/` → Trainer in each module handles learning
+
+**Timeline:** After 7.4 is complete, delete `brainops/`.
+
+---
+
+## Updated Phase Summary
+
+| Phase | Duration | Status | Outcome |
+|-------|----------|--------|---------|
+| 1. Individual modules ready | 2-3 weeks | 🟡 In Progress | Each module installable and demo-able |
+| 2. Unified chart | 1-2 weeks | 🟡 In Progress | One `helm install` for everything |
+| 3. Grafana dashboards | 1 week | ❌ Not Started | Visual proof of value |
+| 4. Integration adapters | 2-3 weeks | 🟡 Partial | Works with any backend |
+| 5. Correlation engine | 3-4 weeks | ✅ Done | Cross-module intelligence |
+| 6. Go-to-market | Ongoing | 🟡 Ongoing | Visibility and adoption |
+| **7. Platform hardening** | **6-8 weeks** | **❌ New** | **Metoro-inspired competitive features** |
+
+### Phase 7 Sub-task Priority
+
+| Priority | Task | Duration | Impact |
+|----------|------|----------|--------|
+| 🔴 High | 7.1 OllinAI deployment verification | 3-4 weeks | New module, fills biggest feature gap |
+| 🔴 High | 7.2 Evidence trails for all actions | 1-2 weeks | Platform-wide quality improvement |
+| 🟡 Medium | 7.3 Slack/Teams notifications with context | 1-2 weeks | User experience, reduces time-to-awareness |
+| 🟡 Medium | 7.4 TitanOps MCP Server (replaces BrainOps) | 2-3 weeks | AI integration, eliminates TypeScript |
+| 🟡 Medium | 7.5 5-minute install goal | 1-2 weeks | Developer experience, adoption |
+| 🟢 Low | 7.6 Delete BrainOps | 1 day | Cleanup after 7.4 |
+
+**Total Phase 7: ~8-10 weeks of work (parallelizable to ~6 weeks with 2 tracks)**
