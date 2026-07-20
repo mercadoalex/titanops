@@ -1,0 +1,24 @@
+# Buf configuration for TitanOps event schema.
+# This module is the single source of truth for the cross-module event contract.
+# Module repos depend on this schema via the Buf Schema Registry.
+#
+# Usage:
+#   buf lint                    # Check style/correctness
+#   buf breaking --against .git#branch=main  # Detect breaking changes vs main
+#   buf push                   # Push to BSR (requires buf.build account)
+#
+# Docs: https://buf.build/docs/configuration/v2/buf-yaml
+version: v2
+modules:
+  - path: .
+    name: buf.build/titanops-platform/titanops-events
+lint:
+  use:
+    - STANDARD
+  except:
+    - PACKAGE_VERSION_SUFFIX  # We use v1 in the package path already
+breaking:
+  use:
+    - FILE
+  except: []
+deps: []
