@@ -12,4 +12,5 @@ use (
 	./shared/titanops-config
 	./shared/titanops-export
 	./shared/titanops-k8s
+	./shared/titanops-platform
 )
