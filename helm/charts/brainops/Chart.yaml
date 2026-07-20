@@ -1,0 +1,14 @@
+apiVersion: v2
+name: brainops
+description: TitanOps Platform Intelligence Layer — LangGraph agent with CockroachDB persistent memory
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - titanops
+  - brainops
+  - agentic
+  - cockroachdb
+  - langgraph
+maintainers:
+  - name: TitanOps Core Team

@@ -1,0 +1,29 @@
+# TitanOps Module Registry
+# Lists all known modules and where to find their integration manifests.
+# The integration validator fetches manifests from these locations.
+
+modules:
+  - name: quack
+    repo: github.com/mercadoalex/quack
+    branch: main
+    manifest_path: .titanops/manifest.yaml
+
+  - name: earthworm
+    repo: github.com/mercadoalex/titanops
+    path: modules/earthworm
+    manifest_path: .titanops/manifest.yaml
+
+  - name: tlapix
+    repo: github.com/mercadoalex/tlapix
+    branch: main
+    manifest_path: .titanops/manifest.yaml
+
+  - name: ebeecontrol
+    repo: github.com/mercadoalex/ebeecontrol
+    branch: main
+    manifest_path: .titanops/manifest.yaml
+
+  - name: ollinai
+    repo: github.com/mercadoalex/titanops
+    path: modules/ollinai
+    manifest_path: .titanops/manifest.yaml

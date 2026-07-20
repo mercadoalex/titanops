@@ -172,3 +172,44 @@ TitanOps is an autonomous AiOps platform for Kubernetes consisting of four modul
 4. WHEN a module is upgraded to a new major version, THE Umbrella_Chart SHALL reject the dependency resolution until the compatibility matrix file is updated to reference the new major version
 5. THE TitanOps_Platform SHALL publish release notes documenting all breaking changes, new features, and bug fixes no later than the time the version tag is published
 6. WHEN a public API element in a shared library is marked as deprecated, THE Shared_Library SHALL retain the deprecated element for at least one minor version release before removing it in a subsequent major version increment
+
+### Requirement 12: Architecture Layer Separation
+
+**User Story:** As a platform developer, I want engine/core packages to depend only on interfaces and never on infrastructure packages, so that scoring, correlation, and classification logic is testable in isolation without containers, network, or external state.
+
+#### Acceptance Criteria
+
+1. THE engine packages (any package under `internal/engine/`, `internal/scoring/`, or `internal/correlation/`) SHALL NOT import infrastructure packages including but not limited to: `k8s.io/*`, `github.com/nats-io/*`, database drivers (`github.com/jackc/pgx/*`, `github.com/lib/pq`), or HTTP client packages beyond the Go standard library
+2. THE infrastructure layer SHALL implement interfaces defined in the engine or interface layer, such that the engine depends on abstractions rather than concrete infrastructure implementations
+3. THE `cmd/` entry point SHALL be the sole location where infrastructure adapters are instantiated and injected into engine components
+4. WHEN a new module is created or an existing module is refactored, THE module SHALL expose at least one Go interface boundary between its engine and infrastructure layers, defined in a `pkg/api/` or `internal/ports/` package
+5. THE engine layer of every module SHALL be fully testable using only in-memory or mock implementations of its interface dependencies, without requiring network access, running containers, or external services
+6. FOR the BrainOps TypeScript module, THE agent, safety, and self-optimization packages SHALL NOT directly import database clients (`src/db/`), message bus clients (`src/nats/`), or external service clients (`src/ccloud/`) — these SHALL be accessed through typed interfaces injected at startup
+
+### Requirement 13: Mock/Offline Mode
+
+**User Story:** As a platform developer and CI pipeline operator, I want every module to support a mock mode with synthetic data sources and a dry-run mode with no side-effects, so that the full agent loop can be tested deterministically in CI without external infrastructure.
+
+#### Acceptance Criteria
+
+1. THE TitanOps_Platform SHALL define a standard run mode via the `TITANOPS_MODE` environment variable accepting the values `live`, `mock`, or `dry-run`, where `mock` is the default when running in CI environments
+2. WHEN `TITANOPS_MODE` is set to `mock`, THE module SHALL replace all infrastructure adapters (NATS publisher, Kubernetes client, database client, eBPF reader) with synthetic in-memory implementations that produce deterministic output given the same random seed
+3. WHEN `TITANOPS_MODE` is set to `dry-run`, THE module SHALL read from real data sources but SHALL NOT execute any actuator side-effects (no pod restarts, no node cordons, no certificate renewals, no network policy changes), instead logging the intended action with full parameters
+4. THE mock mode SHALL be deterministic: given the same random seed (configurable via `TITANOPS_MOCK_SEED` environment variable, default: 42), all synthetic data generation and mock responses SHALL produce identical outputs across runs
+5. EVERY new infrastructure adapter added to any module SHALL include a corresponding mock implementation in the same package that satisfies the identical interface, named with a `Mock` or `_mock` suffix
+6. THE CI pipeline configuration SHALL set `TITANOPS_MODE=mock` for all unit test, property test, and eval pipeline stages, and SHALL set `TITANOPS_MODE=live` only for integration test stages that explicitly require external infrastructure
+7. THE shared library `titanops-config` SHALL export a `RunMode` type and a `CurrentMode()` function that reads and validates the `TITANOPS_MODE` environment variable, returning an error if the value is not one of the three accepted modes
+
+### Requirement 14: Structured Evaluation Framework
+
+**User Story:** As a platform developer, I want a YAML-based evaluation framework that defines scenarios, runs automated scoring assessments, and gates PRs on regression, so that changes to scoring or classification logic are validated against known-good baselines.
+
+#### Acceptance Criteria
+
+1. THE TitanOps_Platform SHALL define evaluation scenarios as YAML files located under `eval/scenarios/<module>/` where each file specifies: a scenario name, description, input events with timestamps and attributes, configuration overrides, and expected outputs including incident count, minimum confidence scores, and narrative content assertions
+2. THE evaluation runner SHALL execute all scenarios for a module using `TITANOPS_MODE=mock` and produce a structured JSON report at `eval/reports/<module>/<date>-<commit-short>.json` containing pass/fail status per scenario, confidence score distributions, and delta from the previous baseline report
+3. WHEN a PR modifies scoring logic, confidence thresholds, severity mapping, anomaly detection parameters, or classification rules in any module, THE CI pipeline SHALL execute the evaluation suite for that module and include the report summary in the PR check output
+4. IF an evaluation scenario that passed in the previous baseline now fails (produces output that does not match expected values), THEN THE CI pipeline SHALL block the PR and report which scenarios regressed, what the expected output was, and what the actual output was
+5. WHEN a new scoring feature, classification category, or threshold parameter is added to a module, THE developer SHALL add at minimum 3 evaluation scenarios: one normal/happy-path case, one boundary/edge case, and one adversarial/unexpected-input case
+6. THE evaluation scenario YAML schema SHALL support the following input types: raw events (with module, event_type, node, pod, namespace, timestamp, severity, and payload fields), configuration overrides (time windows, thresholds, enabled modules), and environment state (node count, pod count, simulated clock time)
+7. THE evaluation report JSON schema SHALL include: total scenarios run, pass count, fail count, list of regressions with scenario name and diff, confidence score summary statistics (min, max, mean, p50, p95), and a comparison delta against the previous report if one exists

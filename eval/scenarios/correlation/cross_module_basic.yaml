@@ -1,0 +1,40 @@
+# Scenario: Two modules reporting on the same node within default window
+# Expected: generates 1 incident with confidence >= 60
+# Formula: 2 modules × 20 = 40 base + 10 (node match) + 10 (namespace match) = 60
+
+name: "Cross-module correlation - basic two modules same node"
+description: >
+  When Earthworm and Quack both report events on the same node within the
+  correlation time window, the engine should generate exactly one incident
+  with confidence based on module count + attribute matches.
+
+inputs:
+  events:
+    - module: earthworm
+      event_type: heartbeat_degraded
+      node: node-01
+      pod: ""
+      namespace: production
+      severity: high
+      timestamp: "2024-06-01T10:00:00Z"
+      payload: "{}"
+    - module: quack
+      event_type: cpu_anomaly
+      node: node-01
+      pod: ""
+      namespace: production
+      severity: medium
+      timestamp: "2024-06-01T10:01:00Z"
+      payload: "{}"
+  config:
+    time_window_seconds: 120
+    confidence_threshold: 100
+
+expected:
+  incidents_generated: 1
+  min_confidence: 60
+  max_confidence: 70
+  narrative_contains:
+    - "earthworm"
+    - "quack"
+    - "node"

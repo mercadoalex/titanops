@@ -1,0 +1,29 @@
+# Scenario: Very high AI confidence + high CPU + high memory → node cordon
+# Expected: node_cordon action (confidence >= 0.9 AND cpu > 0.9 AND memory > 0.85)
+
+name: "High confidence + extreme metrics - node cordon"
+description: >
+  When the AI model returns very high confidence (>= 0.9) combined with
+  extreme CPU (> 0.9) and memory (> 0.85) usage, the agent should escalate
+  to node_cordon as the most aggressive remediation.
+
+inputs:
+  heartbeat:
+    node_id: worker-07
+    cpu_usage: 0.95
+    memory_usage: 0.92
+    disk_io: 0.80
+    network_io: 0.70
+    latency: 350.0
+  config:
+    threshold: 0.75
+    rule_thresholds:
+      cpu_threshold: 0.9
+      memory_threshold: 0.85
+      latency_threshold: 500
+  ai_score: 0.95
+
+expected:
+  action_taken: true
+  action_type: node_cordon
+  was_rule_based: false

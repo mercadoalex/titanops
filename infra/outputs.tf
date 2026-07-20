@@ -78,3 +78,35 @@ output "correlation_sa_role_arn" {
   description = "IAM role ARN for Correlation Engine service account (IRSA)"
   value       = var.enable_correlation ? aws_iam_role.correlation_sa[0].arn : ""
 }
+
+# --- Layer 2: Intelligence Layer Outputs ---
+
+output "brainops_sa_role_arn" {
+  description = "IAM role ARN for BrainOps service account (IRSA)"
+  value       = var.enable_brainops ? aws_iam_role.brainops_sa[0].arn : ""
+}
+
+output "cockroachdb_cluster_id" {
+  description = "CockroachDB cluster ID"
+  value       = var.enable_cockroachdb ? cockroach_cluster.brainops[0].id : ""
+}
+
+output "cockroachdb_sql_dns" {
+  description = "CockroachDB SQL endpoint (host:port for psql/pg connections)"
+  value       = var.enable_cockroachdb ? cockroach_cluster.brainops[0].regions[0].sql_dns : ""
+}
+
+output "cockroachdb_ui_url" {
+  description = "CockroachDB Cloud Console URL"
+  value       = var.enable_cockroachdb ? cockroach_cluster.brainops[0].regions[0].ui_dns : ""
+}
+
+output "cockroachdb_secret_arn" {
+  description = "ARN of the Secrets Manager secret containing the CockroachDB connection string"
+  value       = var.enable_cockroachdb ? aws_secretsmanager_secret.cockroachdb_uri[0].arn : ""
+}
+
+output "nats_service_url" {
+  description = "In-cluster NATS URL for module connections"
+  value       = var.enable_nats ? "nats://nats.titanops.svc.cluster.local:4222" : ""
+}

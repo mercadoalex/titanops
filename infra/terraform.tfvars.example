@@ -56,3 +56,24 @@ enable_earthworm   = true
 enable_ebeecontrol = true
 enable_quack       = true
 enable_correlation = true
+
+# -----------------------------------------------------------------------------
+# Layer 2: Intelligence Layer (optional — only enable if you need BrainOps)
+# Adds: CockroachDB Serverless, NATS event bus, BrainOps agent resources
+# Cost: CockroachDB free tier ($0), NATS in-cluster ($0), Bedrock pay-per-use
+# -----------------------------------------------------------------------------
+
+# Enable cross-module event correlation via NATS
+enable_nats = true
+
+# Enable BrainOps agentic intelligence (requires CockroachDB)
+enable_brainops    = false
+enable_cockroachdb = false
+
+# CockroachDB configuration (only needed if enable_cockroachdb = true)
+# Get API key from: https://cockroachlabs.cloud → Organization → API Keys
+# cockroachdb_api_key      = "your-api-key-here"
+# cockroachdb_plan         = "SERVERLESS"
+# cockroachdb_spend_limit  = 0  # 0 = free tier only (5GB + 50M RUs/month)
+# cockroachdb_sql_user     = "brainops"
+# cockroachdb_sql_password = "generate-a-strong-password"

@@ -3,6 +3,7 @@ go 1.22.0
 use (
 	./cmd/titanops
 	./correlation
+	./eval/runner
 	./gateway
 	./modules/earthworm
 	./modules/ollinai

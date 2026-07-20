@@ -1,0 +1,49 @@
+# Scenario: Three modules reporting on the same node+namespace within 10 seconds
+# Expected: high confidence due to 3 modules + attribute matches + proximity bonus
+# Formula: 3 modules × 20 = 60 + 10 (node) + 10 (namespace) + 10 (proximity <10s) = 90
+
+name: "Three modules - high confidence with proximity bonus"
+description: >
+  When three modules (Earthworm, Quack, eBeeControl) report events on the same
+  node and namespace within 10 seconds, the engine should produce a high-confidence
+  incident that includes the proximity bonus.
+
+inputs:
+  events:
+    - module: earthworm
+      event_type: heartbeat_degraded
+      node: worker-a
+      pod: ""
+      namespace: production
+      severity: high
+      timestamp: "2024-06-01T12:00:00Z"
+      payload: "{}"
+    - module: quack
+      event_type: noisy_neighbor_detected
+      node: worker-a
+      pod: ""
+      namespace: production
+      severity: high
+      timestamp: "2024-06-01T12:00:05Z"
+      payload: "{}"
+    - module: ebeecontrol
+      event_type: honeytoken_accessed
+      node: worker-a
+      pod: ""
+      namespace: production
+      severity: critical
+      timestamp: "2024-06-01T12:00:08Z"
+      payload: "{}"
+  config:
+    time_window_seconds: 120
+    confidence_threshold: 100
+
+expected:
+  incidents_generated: 1
+  min_confidence: 90
+  max_confidence: 100
+  narrative_contains:
+    - "earthworm"
+    - "quack"
+    - "ebeecontrol"
+    - "node"

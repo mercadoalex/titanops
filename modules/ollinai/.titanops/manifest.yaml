@@ -1,0 +1,43 @@
+module: ollinai
+version: 0.2.0
+repository: github.com/mercadoalex/titanops/modules/ollinai
+
+events:
+  - type: deployment_risk
+    severity: varies
+    schema_version: 1
+  - type: dora_metrics
+    severity: informational
+    schema_version: 1
+  - type: incident_correlation
+    severity: varies
+    schema_version: 1
+  - type: supply_chain_credential_exfil
+    severity: critical
+    schema_version: 1
+  - type: supply_chain_process_anomaly
+    severity: high
+    schema_version: 1
+  - type: supply_chain_attestation_failure
+    severity: high
+    schema_version: 1
+
+dependencies:
+  titanops_export: ">=0.1.0"
+  titanops_config: ">=0.1.0"
+
+compliance:
+  layer_separation: true        # Poller uses OllinAPIClient interface
+  mock_mode: true               # MockAPIClient available
+  dry_run_mode: false           # TODO: add dry-run emitter mode
+  eval_scenarios: 0             # TODO: add eval scenarios for severity mapping
+  dedup_compatible: true
+
+health:
+  liveness: /healthz
+  readiness: /readyz
+  metrics: /metrics
+
+eval:
+  last_report: ""
+  scenarios_path: ""

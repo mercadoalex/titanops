@@ -2,11 +2,8 @@ package ollinai
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
+	"errors"
 	"log"
-	"net/http"
 	"time"
 
 	export "github.com/mercadoalex/titanops/shared/titanops-export"
@@ -14,12 +11,9 @@ import (
 
 // PollerConfig holds configuration for the Poller.
 type PollerConfig struct {
-	// Client is the HTTP client used for API requests.
-	Client *http.Client
-	// Endpoint is the OllinAI API base URL.
-	Endpoint string
-	// AuthToken is the bearer token for authentication.
-	AuthToken string
+	// APIClient is the interface for fetching data from the OllinAI API.
+	// In live mode this is an HTTPAPIClient; in mock mode a MockAPIClient.
+	APIClient OllinAPIClient
 	// RiskInterval is the polling interval for deployment risk data. Default: 30s.
 	RiskInterval time.Duration
 	// DORAInterval is the polling interval for DORA metrics. Default: 5m.
@@ -33,11 +27,11 @@ type PollerConfig struct {
 	Logger *log.Logger
 }
 
-// Poller periodically fetches data from the OllinAI REST API and emits events.
+// Poller periodically fetches data from the OllinAI API and emits events.
+// It depends on the OllinAPIClient interface — no HTTP, network, or infrastructure
+// imports exist in this file. All infrastructure details are behind the interface.
 type Poller struct {
-	client       *http.Client
-	endpoint     string
-	authToken    string
+	apiClient    OllinAPIClient
 	riskInterval time.Duration
 	doraInterval time.Duration
 	emitter      EventEmitter
@@ -45,45 +39,8 @@ type Poller struct {
 	logger       *log.Logger
 }
 
-// Error category constants for the poller.
-const (
-	ErrOllinAPIUnavailable ErrorCategory = "ollinai_api_unavailable"
-	ErrOllinAPITimeout     ErrorCategory = "ollinai_api_timeout"
-	ErrOllinAPIAuth        ErrorCategory = "ollinai_auth_failed"
-)
-
-// ErrorCategory represents a typed error category for the adapter.
-type ErrorCategory string
-
-// apiDeploymentRiskEntry represents a single deployment risk entry from the OllinAI API.
-type apiDeploymentRiskEntry struct {
-	Service     string   `json:"service"`
-	CommitSHA   string   `json:"commit_sha"`
-	Deployer    string   `json:"deployer"`
-	RiskScore   int      `json:"risk_score"`
-	RiskFactors []string `json:"risk_factors"`
-	PipelineID  string   `json:"pipeline_id"`
-	Environment string   `json:"environment"`
-	Node        string   `json:"node"`
-	Pod         string   `json:"pod"`
-	Namespace   string   `json:"namespace"`
-}
-
-// apiDORAMetricsResponse represents the DORA metrics response from the OllinAI API.
-type apiDORAMetricsResponse struct {
-	DeploymentFrequency  float64 `json:"deployment_frequency"`
-	LeadTimeForChanges   float64 `json:"lead_time_for_changes"`
-	ChangeFailureRate    float64 `json:"change_failure_rate"`
-	TimeToRestoreService float64 `json:"time_to_restore_service"`
-}
-
 // NewPoller creates a new Poller with the given configuration.
 func NewPoller(cfg PollerConfig) *Poller {
-	client := cfg.Client
-	if client == nil {
-		client = &http.Client{Timeout: 30 * time.Second}
-	}
-
 	riskInterval := cfg.RiskInterval
 	if riskInterval <= 0 {
 		riskInterval = 30 * time.Second
@@ -95,9 +52,7 @@ func NewPoller(cfg PollerConfig) *Poller {
 	}
 
 	return &Poller{
-		client:       client,
-		endpoint:     cfg.Endpoint,
-		authToken:    cfg.AuthToken,
+		apiClient:    cfg.APIClient,
 		riskInterval: riskInterval,
 		doraInterval: doraInterval,
 		emitter:      cfg.Emitter,
@@ -130,19 +85,11 @@ func (p *Poller) Start(ctx context.Context) error {
 	}
 }
 
-// pollDeploymentRisk fetches deployment risk data from the OllinAI API and emits events.
+// pollDeploymentRisk fetches deployment risk data via the API client and emits events.
 func (p *Poller) pollDeploymentRisk(ctx context.Context) {
-	url := p.endpoint + "/api/v1/deployments/risk"
-
-	body, err := p.doRequest(ctx, url)
+	entries, err := p.apiClient.FetchDeploymentRisks(ctx)
 	if err != nil {
-		return // error already reported via doRequest
-	}
-
-	var entries []apiDeploymentRiskEntry
-	if err := json.Unmarshal(body, &entries); err != nil {
-		p.logWarn("failed to parse deployment risk response: %v", err)
-		p.reportError(ErrOllinAPIUnavailable, fmt.Errorf("failed to parse deployment risk response: %w", err))
+		p.handleAPIError("FetchDeploymentRisks", err)
 		return
 	}
 
@@ -154,19 +101,11 @@ func (p *Poller) pollDeploymentRisk(ctx context.Context) {
 	}
 }
 
-// pollDORAMetrics fetches DORA metrics from the OllinAI API and emits an event.
+// pollDORAMetrics fetches DORA metrics via the API client and emits an event.
 func (p *Poller) pollDORAMetrics(ctx context.Context) {
-	url := p.endpoint + "/api/v1/metrics/dora"
-
-	body, err := p.doRequest(ctx, url)
+	metrics, err := p.apiClient.FetchDORAMetrics(ctx)
 	if err != nil {
-		return // error already reported via doRequest
-	}
-
-	var metrics apiDORAMetricsResponse
-	if err := json.Unmarshal(body, &metrics); err != nil {
-		p.logWarn("failed to parse DORA metrics response: %v", err)
-		p.reportError(ErrOllinAPIUnavailable, fmt.Errorf("failed to parse DORA metrics response: %w", err))
+		p.handleAPIError("FetchDORAMetrics", err)
 		return
 	}
 
@@ -176,54 +115,20 @@ func (p *Poller) pollDORAMetrics(ctx context.Context) {
 	}
 }
 
-// doRequest performs an authenticated GET request to the given URL.
-// Returns the response body bytes or an error. On error, it logs a warning
-// and reports the error via the OnError callback.
-func (p *Poller) doRequest(ctx context.Context, url string) ([]byte, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
-	if err != nil {
-		p.logWarn("failed to create request for %s: %v", url, err)
-		p.reportError(ErrOllinAPIUnavailable, fmt.Errorf("failed to create request: %w", err))
-		return nil, err
+// handleAPIError extracts the error category from an APIError and reports it.
+func (p *Poller) handleAPIError(method string, err error) {
+	var apiErr *APIError
+	if errors.As(err, &apiErr) {
+		p.logWarn("%s: %s", method, apiErr.Message)
+		p.reportError(apiErr.Category, err)
+	} else {
+		p.logWarn("%s: %v", method, err)
+		p.reportError(ErrOllinAPIUnavailable, err)
 	}
-
-	req.Header.Set("Authorization", "Bearer "+p.authToken)
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := p.client.Do(req)
-	if err != nil {
-		p.logWarn("API request failed for %s: %v", url, err)
-		p.reportError(ErrOllinAPITimeout, fmt.Errorf("API request failed: %w", err))
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	// Handle auth errors: signal health degraded
-	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		p.logWarn("authentication failed for %s: HTTP %d", url, resp.StatusCode)
-		p.reportError(ErrOllinAPIAuth, fmt.Errorf("authentication failed: HTTP %d", resp.StatusCode))
-		return nil, fmt.Errorf("auth error: HTTP %d", resp.StatusCode)
-	}
-
-	// Handle other non-2xx responses
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		p.logWarn("API returned non-2xx for %s: HTTP %d", url, resp.StatusCode)
-		p.reportError(ErrOllinAPIUnavailable, fmt.Errorf("API returned HTTP %d", resp.StatusCode))
-		return nil, fmt.Errorf("API error: HTTP %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		p.logWarn("failed to read response body from %s: %v", url, err)
-		p.reportError(ErrOllinAPIUnavailable, fmt.Errorf("failed to read response body: %w", err))
-		return nil, err
-	}
-
-	return body, nil
 }
 
-// buildDeploymentRiskEvent constructs an export.Event from a deployment risk API entry.
-func (p *Poller) buildDeploymentRiskEvent(entry apiDeploymentRiskEntry) export.Event {
+// buildDeploymentRiskEvent constructs an export.Event from a deployment risk entry.
+func (p *Poller) buildDeploymentRiskEvent(entry DeploymentRiskEntry) export.Event {
 	payload := DeploymentRiskPayload{
 		Service:     entry.Service,
 		CommitSHA:   entry.CommitSHA,
@@ -263,8 +168,8 @@ func (p *Poller) buildDeploymentRiskEvent(entry apiDeploymentRiskEntry) export.E
 	}
 }
 
-// buildDORAMetricsEvent constructs an export.Event from DORA metrics API data.
-func (p *Poller) buildDORAMetricsEvent(metrics apiDORAMetricsResponse) export.Event {
+// buildDORAMetricsEvent constructs an export.Event from DORA metrics.
+func (p *Poller) buildDORAMetricsEvent(metrics *DORAMetrics) export.Event {
 	payload := DORAMetricsPayload{
 		DeploymentFrequency:  metrics.DeploymentFrequency,
 		LeadTimeForChanges:   metrics.LeadTimeForChanges,
