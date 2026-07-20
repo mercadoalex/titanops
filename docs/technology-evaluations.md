@@ -94,3 +94,76 @@ Open-source, self-hosted, framework-agnostic. If vendor lock-in becomes a concer
 | 2026-07 | Mojo | Quack / All | Deferred | No eBPF story, no Go interop, solves wrong bottleneck |
 | 2026-07 | LangSmith | BrainOps | Adopted (narrow scope) | Natural fit for LangGraph tracing, but not a platform-wide eval replacement |
 | 2026-07 | Custom Eval Framework | All modules | Adopted | Deterministic, CI-friendly, covers all scoring modules |
+
+---
+
+## VictoriaMetrics Patterns & Techniques
+
+**Evaluated:** July 2026  
+**Context:** Studied VictoriaMetrics (github.com/VictoriaMetrics/VictoriaMetrics) for applicable performance patterns, storage techniques, and architectural insights. TitanOps is not a competing TSDB — the goal is to learn from VM's Go performance discipline and apply it to our event pipeline, correlation engine, and export layer.  
+**Decision:** Adopt selectively. Six techniques evaluated, two implemented immediately.
+
+### Techniques Evaluated
+
+#### 1. fastcache — GC-free in-memory cache (Adopted)
+
+VM built a custom cache library (github.com/VictoriaMetrics/fastcache) that stores millions of entries with near-zero GC overhead. Data lives in 64KB byte chunks instead of pointer-rich maps, reducing pointer count from O(entries) to O(chunks).
+
+**Applied to TitanOps:** Correlation engine event deduplication cache. Under high event volume, the dedup cache must hold thousands of recent event fingerprints without adding GC pressure to the hot path.
+
+**Source:** [VictoriaMetrics/fastcache](https://github.com/VictoriaMetrics/fastcache)
+
+#### 2. Stream pre-aggregation at the edge (Future)
+
+vmagent aggregates metrics (sum, count, avg, quantiles) during the scrape-to-store pipeline before shipping to storage. This reduces cardinality at the source.
+
+**Applicability to TitanOps:** Modules could pre-aggregate eBPF events before publishing to NATS (e.g., "5 anomalies on node-01 in last 30s, max_score=0.82") instead of shipping every raw event. Reduces correlation engine load and NATS bandwidth.
+
+**Status:** Deferred. Requires changes to titanops-export library. Revisit when event volume exceeds single-node correlation capacity.
+
+#### 3. Event deduplication with configurable windows (Adopted)
+
+VM's deduplication collapses near-duplicate samples within a configurable time window during merge. When two HA instances scrape the same target, only one sample per window survives.
+
+**Applied to TitanOps:** Correlation engine dedup pass before correlation. When multiple modules or HA instances emit near-identical events (same module + event_type + node within a configurable window), collapse them to prevent inflated confidence scores.
+
+#### 4. sync.Pool for serialization buffer reuse (Adopted)
+
+VM uses sync.Pool pervasively to avoid allocations on the hot path — buffer reuse for marshaling, request handling, and encoding. Their codebase is described as a "living textbook of Go high-performance programming."
+
+**Applied to TitanOps:** Event serialization in titanops-export. Every `json.Marshal(event)` currently allocates a fresh `[]byte`. Pooling these buffers reduces GC pressure under sustained load.
+
+#### 5. LSM-style tiered event buffering (Future)
+
+VM uses in-memory parts → small parts (disk) → big parts (disk) with background merge. Parts are merged when the output size is ≥7.5× the largest input part.
+
+**Applicability to TitanOps:** If the titanops-export ring buffer needs to survive longer NATS outages, a disk-backed tier between memory and NATS would prevent event loss. Current ring buffer evicts on overflow.
+
+**Status:** Deferred. Current 1000-event buffer is sufficient for typical outage durations (<60s). Revisit if SLO requires zero event loss.
+
+#### 6. Columnar storage with per-column compression (Future)
+
+VM stores timestamps, values, and indexes in separate files. Only the metaindex is memory-resident. Each column uses type-appropriate compression (delta-of-delta for timestamps, XOR/Gorilla for values).
+
+**Applicability to TitanOps:** Relevant if TitanOps builds an event replay/forensics feature. Storing event payloads column-wise would give 5-10× better compression than row-wise JSON.
+
+**Status:** Deferred. No forensics feature planned currently.
+
+### Architectural Validation
+
+VM's shared-nothing cluster architecture (vmstorage nodes are independent, no cross-node communication, routing by consistent hashing at vminsert) validates TitanOps's existing design principles:
+
+- "Modules never import other modules" — same shared-nothing at module level
+- "Worker-per-core, route by affinity" — same pattern VM uses for storage sharding
+- "Batch at boundaries, serialize once per batch" — VM does the same at flush time
+
+### Decision Log Update
+
+| Date | Technology | Module | Decision | Rationale |
+|------|-----------|--------|----------|-----------|
+| 2026-07 | fastcache | Correlation | Adopted | GC-free dedup cache for event fingerprints on hot path |
+| 2026-07 | Event dedup window | Correlation | Adopted | Prevents inflated confidence from duplicate events |
+| 2026-07 | sync.Pool buffers | titanops-export | Adopted | Reduces GC pressure in serialization path |
+| 2026-07 | Stream pre-aggregation | titanops-export | Deferred | Revisit when event volume exceeds single-node capacity |
+| 2026-07 | LSM tiered buffering | titanops-export | Deferred | Current ring buffer sufficient for <60s outages |
+| 2026-07 | Columnar storage | Platform | Deferred | No forensics feature planned |

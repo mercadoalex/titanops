@@ -19,6 +19,10 @@ type EngineConfig struct {
 	// ConfidenceThreshold is the minimum confidence score required to execute auto-actions.
 	// Default: 80. Valid range: 1 to 100.
 	ConfidenceThreshold int
+	// DedupWindow is the deduplication window duration. Events with the same
+	// fingerprint (module + event_type + node) within this window are collapsed.
+	// Default: 0 (disabled). Typical value: 5s.
+	DedupWindow time.Duration
 	// AutoActions lists the configured auto-action types.
 	AutoActions []AutoActionConfig
 }
@@ -135,6 +139,7 @@ type Engine struct {
 	exporter  export.Exporter
 	actions   ActionExecutor
 	idGen     func() string
+	dedup     *dedupCache
 }
 
 // NewEngine creates a new correlation engine with the given configuration.
@@ -149,6 +154,7 @@ func NewEngine(cfg EngineConfig, exporter export.Exporter, actions ActionExecuto
 		exporter: exporter,
 		actions:  actions,
 		idGen:    defaultIDGen,
+		dedup:    newDedupCache(cfg.DedupWindow),
 	}, nil
 }
 
@@ -158,6 +164,8 @@ func defaultIDGen() string {
 }
 
 // Ingest adds an event to the correlation engine's sliding window.
+// If deduplication is enabled, duplicate events (same module + event_type + node
+// within the dedup window) are silently dropped.
 // It is safe for concurrent use.
 func (e *Engine) Ingest(ctx context.Context, event export.Event) error {
 	if ctx.Err() != nil {
@@ -168,6 +176,12 @@ func (e *Engine) Ingest(ctx context.Context, event export.Event) error {
 	defer e.mu.Unlock()
 
 	now := time.Now()
+
+	// Dedup check — skip if this is a duplicate within the window.
+	if e.dedup.IsDuplicate(event, now) {
+		return nil
+	}
+
 	e.events = append(e.events, TimedEvent{
 		Event:      event,
 		ReceivedAt: now,
@@ -175,6 +189,9 @@ func (e *Engine) Ingest(ctx context.Context, event export.Event) error {
 
 	// Prune events outside the time window.
 	e.pruneEventsLocked(now)
+
+	// Periodically prune the dedup cache too.
+	e.dedup.Prune(now)
 
 	return nil
 }
