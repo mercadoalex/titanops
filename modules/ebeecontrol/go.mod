@@ -8,6 +8,7 @@ require (
 	github.com/mercadoalex/titanops/shared/titanops-config v0.0.0
 	github.com/mercadoalex/titanops/shared/titanops-export v0.0.0
 	github.com/mercadoalex/titanops/shared/titanops-k8s v0.0.0
+	github.com/mercadoalex/titanops/shared/titanops-platform v0.0.0
 )
 
 replace (
@@ -15,4 +16,5 @@ replace (
 	github.com/mercadoalex/titanops/shared/titanops-config => ../../shared/titanops-config
 	github.com/mercadoalex/titanops/shared/titanops-export => ../../shared/titanops-export
 	github.com/mercadoalex/titanops/shared/titanops-k8s => ../../shared/titanops-k8s
+	github.com/mercadoalex/titanops/shared/titanops-platform => ../../shared/titanops-platform
 )
