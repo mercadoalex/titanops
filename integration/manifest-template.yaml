@@ -1,0 +1,47 @@
+# Template: .titanops/manifest.yaml
+# Copy this to your module repo at .titanops/manifest.yaml and fill in the values.
+#
+# This manifest covers DEVELOPMENT VISIBILITY — architecture compliance,
+# eval coverage, and mock mode status. It complements (does not replace):
+# - Buf Schema Registry: event schema evolution and breaking change detection
+# - Helm OCI Registry: release version coordination and dependency resolution
+#
+# TitanOps CI reads this to track engineering discipline across modules.
+
+module: <module-name>          # e.g., quack, earthworm, tlapix, ebeecontrol
+version: 0.1.0                 # Semantic version of the module
+repository: github.com/mercadoalex/<module-name>
+
+# Events this module emits to the NATS event bus.
+# Canonical schema lives in Buf registry — this is a quick-reference list.
+events:
+  - type: <event_type>         # e.g., cpu_anomaly, cert_expiring, honeytoken_accessed
+    severity: <severity>       # critical | high | medium | low | informational
+    schema_version: 1          # Bump when payload format changes
+
+# Shared library version compatibility (build-time Go module deps).
+# Runtime version coordination is handled by Helm chart dependencies.
+dependencies:
+  titanops_export: ">=0.1.0"
+  titanops_config: ">=0.1.0"
+  # titanops_ai: ">=0.1.0"    # Uncomment if module uses AI inference
+  # titanops_k8s: ">=0.1.0"   # Uncomment if module uses K8s client
+
+# Architecture compliance flags (per .kiro/steering/architecture.md)
+compliance:
+  layer_separation: false      # Set true when engine has no infra imports
+  mock_mode: false             # Set true when TITANOPS_MODE=mock is supported
+  dry_run_mode: false          # Set true when TITANOPS_MODE=dry-run is supported
+  eval_scenarios: 0            # Number of eval scenarios (minimum 3 for scoring modules)
+  dedup_compatible: false      # Set true when events support dedup fingerprinting
+
+# Health endpoints (required by engineering standards)
+health:
+  liveness: /healthz
+  readiness: /readyz
+  metrics: /metrics
+
+# Evaluation framework (optional until eval scenarios are written)
+eval:
+  last_report: ""              # Relative path to latest eval report JSON
+  scenarios_path: ""           # Relative path to eval/scenarios/ directory

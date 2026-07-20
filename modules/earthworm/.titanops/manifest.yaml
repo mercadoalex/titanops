@@ -1,0 +1,39 @@
+module: earthworm
+version: 0.2.0
+repository: github.com/mercadoalex/titanops/modules/earthworm
+
+events:
+  - type: heartbeat_degraded
+    severity: high
+    schema_version: 1
+  - type: node_cordoned
+    severity: high
+    schema_version: 1
+  - type: pod_restarted
+    severity: medium
+    schema_version: 1
+  - type: anomaly_detected
+    severity: medium
+    schema_version: 1
+
+dependencies:
+  titanops_export: ">=0.1.0"
+  titanops_config: ">=0.1.0"
+  titanops_ai: ">=0.1.0"
+  titanops_k8s: ">=0.1.0"
+
+compliance:
+  layer_separation: true
+  mock_mode: false              # TODO: wire TITANOPS_MODE into earthworm
+  dry_run_mode: false           # TODO: add dry-run actuator
+  eval_scenarios: 4
+  dedup_compatible: true
+
+health:
+  liveness: /healthz
+  readiness: /readyz
+  metrics: /metrics
+
+eval:
+  last_report: ""
+  scenarios_path: eval/scenarios/earthworm/
