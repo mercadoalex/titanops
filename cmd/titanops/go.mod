@@ -7,15 +7,21 @@ go 1.22.0
 require (
 	github.com/mercadoalex/titanops/correlation v0.0.0
 	github.com/mercadoalex/titanops/gateway v0.0.0
+	github.com/mercadoalex/titanops/modules/earthworm v0.0.0
+	github.com/mercadoalex/titanops/modules/ebeecontrol v0.0.0
 	github.com/mercadoalex/titanops/shared/titanops-ai v0.0.0
 	github.com/mercadoalex/titanops/shared/titanops-export v0.0.0
+	github.com/mercadoalex/titanops/shared/titanops-platform v0.0.0
 )
 
 replace (
 	github.com/mercadoalex/titanops/correlation => ../../correlation
 	github.com/mercadoalex/titanops/gateway => ../../gateway
+	github.com/mercadoalex/titanops/modules/earthworm => ../../modules/earthworm
+	github.com/mercadoalex/titanops/modules/ebeecontrol => ../../modules/ebeecontrol
 	github.com/mercadoalex/titanops/shared/titanops-ai => ../../shared/titanops-ai
 	github.com/mercadoalex/titanops/shared/titanops-config => ../../shared/titanops-config
 	github.com/mercadoalex/titanops/shared/titanops-export => ../../shared/titanops-export
 	github.com/mercadoalex/titanops/shared/titanops-k8s => ../../shared/titanops-k8s
+	github.com/mercadoalex/titanops/shared/titanops-platform => ../../shared/titanops-platform
 )

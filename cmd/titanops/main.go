@@ -10,6 +10,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -21,8 +22,11 @@ import (
 	config "github.com/mercadoalex/titanops/shared/titanops-config"
 	"github.com/mercadoalex/titanops/correlation"
 	"github.com/mercadoalex/titanops/gateway"
+	"github.com/mercadoalex/titanops/modules/earthworm"
+	"github.com/mercadoalex/titanops/modules/ebeecontrol"
 	ai "github.com/mercadoalex/titanops/shared/titanops-ai"
 	export "github.com/mercadoalex/titanops/shared/titanops-export"
+	platform "github.com/mercadoalex/titanops/shared/titanops-platform"
 )
 
 // PlatformConfig holds the top-level configuration for the TitanOps platform.
@@ -157,11 +161,52 @@ func main() {
 	log.Printf("Correlation engine initialized (window=%s, threshold=%d)",
 		correlationCfg.TimeWindow, correlationCfg.ConfidenceThreshold)
 
-	// 5. Create API gateway (serves dashboard and exposes platform state)
+	// 5. Create platform kernel (module lifecycle manager)
+	clusterID := os.Getenv("TITANOPS_CLUSTER_ID")
+	if clusterID == "" {
+		clusterID = "local-dev"
+	}
+	kernel := platform.NewKernel(clusterID)
+
+	// Wire kernel event emitter to the correlation engine exporter.
+	kernel.SetEmitter(&exporterEmitter{exporter: exporter})
+
+	// Wire AI provider if available.
+	if aiProvider != nil {
+		kernel.SetAIProvider(aiProvider)
+	}
+
+	// Register modules.
+	if err := kernel.Register(earthworm.New()); err != nil {
+		log.Printf("WARN: failed to register earthworm module: %v", err)
+	}
+	if err := kernel.Register(ebeecontrol.NewModule()); err != nil {
+		log.Printf("WARN: failed to register ebeecontrol module: %v", err)
+	}
+
+	// Provide module configs (modules will parse their own sections).
+	if earthwormCfg := os.Getenv("TITANOPS_EARTHWORM_CONFIG"); earthwormCfg != "" {
+		kernel.SetModuleConfig("earthworm", json.RawMessage(earthwormCfg))
+	}
+	if ebeecontrolCfg := os.Getenv("TITANOPS_EBEECONTROL_CONFIG"); ebeecontrolCfg != "" {
+		kernel.SetModuleConfig("ebeecontrol", json.RawMessage(ebeecontrolCfg))
+	}
+
+	// Start all modules (fault-isolated — one failing module doesn't crash the platform).
+	moduleCtx, moduleCancel := context.WithCancel(context.Background())
+	defer moduleCancel()
+	if errs := kernel.StartAll(moduleCtx); len(errs) > 0 {
+		for _, err := range errs {
+			log.Printf("WARN: module start error: %v", err)
+		}
+	}
+	log.Println("Platform kernel initialized with module lifecycle management")
+
+	// 6. Create API gateway (serves dashboard and exposes platform state)
 	gw := gateway.NewGateway()
 	log.Println("API gateway initialized")
 
-	// 6. Register routes on HTTP mux
+	// 7. Register routes on HTTP mux
 	mux := http.NewServeMux()
 	gw.RegisterRoutes(mux)
 
@@ -174,13 +219,21 @@ func main() {
 	// Platform info endpoint
 	mux.HandleFunc("/api/info", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"platform":"titanops","version":"0.1.0","components":{"correlation":true,"gateway":true,"ai":%t}}`,
-			aiProvider != nil)
+		fmt.Fprintf(w, `{"platform":"titanops","version":"0.1.0","cluster":"%s","components":{"correlation":true,"gateway":true,"ai":%t,"kernel":true}}`,
+			clusterID, aiProvider != nil)
 	})
 
-	log.Println("Routes registered: /api/health, /api/actions, /api/correlations, /api/overrides, /api/audit, /api/explain/, /healthz, /api/info")
+	// Module health endpoint (aggregated from kernel)
+	mux.HandleFunc("/api/modules/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		health := kernel.HealthCheckAll(r.Context())
+		data, _ := json.Marshal(health)
+		w.Write(data)
+	})
 
-	// 7. Start HTTP server with graceful shutdown
+	log.Println("Routes registered: /api/health, /api/actions, /api/correlations, /api/overrides, /api/audit, /api/explain/, /healthz, /api/info, /api/modules/health")
+
+	// 8. Start HTTP server with graceful shutdown
 	server := &http.Server{
 		Addr:         cfg.HTTPAddr,
 		Handler:      mux,
@@ -203,9 +256,10 @@ func main() {
 
 	// Log integration summary
 	log.Println("=== TitanOps Platform Integration ===")
+	log.Println("  Kernel → Modules (earthworm, ebeecontrol)")
 	log.Println("  Modules → Event Bus → Correlation Engine → Export Adapters")
 	log.Println("  Correlation Engine → API Gateway → Dashboard")
-	log.Println("  One-way dependency: cmd imports all; nothing imports cmd")
+	log.Println("  Module lifecycle: Start/Stop/HealthCheck via platform.Module")
 	log.Println("======================================")
 
 	// Wait for shutdown signal
@@ -215,6 +269,9 @@ func main() {
 	// Graceful shutdown with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
+
+	// Stop modules first (they may need to flush events).
+	kernel.StopAll(ctx)
 
 	if err := server.Shutdown(ctx); err != nil {
 		log.Fatalf("Server shutdown failed: %v", err)
@@ -293,6 +350,22 @@ type noOpBackend struct{ name string }
 func (b *noOpBackend) Name() string                                 { return b.name }
 func (b *noOpBackend) Send(_ context.Context, _ export.Event) error { return nil }
 func (b *noOpBackend) IsEnabled() bool                              { return true }
+
+// exporterEmitter bridges the platform kernel's EventEmitter interface to the
+// existing export.Exporter, routing module events through the standard pipeline.
+type exporterEmitter struct {
+	exporter export.Exporter
+}
+
+func (e *exporterEmitter) Emit(ctx context.Context, event export.Event) error {
+	results := e.exporter.Export(ctx, event)
+	for _, r := range results {
+		if !r.Success {
+			return r.Error
+		}
+	}
+	return nil
+}
 
 // dryRunExecutor logs actions without executing them. Used in dry-run mode.
 type dryRunExecutor struct{}
