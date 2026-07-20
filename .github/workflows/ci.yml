@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main, feat/**]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: "**/go.sum"
+
+      - name: Build all modules
+        run: |
+          for mod in $(grep '\./' go.work | tr -d '\t'); do
+            echo "::group::Build $mod"
+            (cd "$mod" && go build ./...)
+            echo "::endgroup::"
+          done
+
+      - name: Vet all modules
+        run: |
+          for mod in $(grep '\./' go.work | tr -d '\t'); do
+            echo "::group::Vet $mod"
+            (cd "$mod" && go vet ./...)
+            echo "::endgroup::"
+          done
+
+      - name: Test all modules (with race detector)
+        run: |
+          for mod in $(grep '\./' go.work | tr -d '\t'); do
+            echo "::group::Test $mod"
+            (cd "$mod" && go test -race -timeout 120s ./...)
+            echo "::endgroup::"
+          done
