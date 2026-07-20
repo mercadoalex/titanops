@@ -1,0 +1,22 @@
+# Code generation configuration for TitanOps protobuf schema.
+# Generates Go code into shared/titanops-export.
+#
+# Usage:
+#   buf generate   # Generate Go code from proto files
+#
+# Docs: https://buf.build/docs/configuration/v2/buf-gen-yaml
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/mercadoalex/titanops/gen
+plugins:
+  - remote: buf.build/protocolbuffers/go
+    out: ../gen/proto/go
+    opt:
+      - paths=source_relative
+  - remote: buf.build/grpc/go
+    out: ../gen/proto/go
+    opt:
+      - paths=source_relative
