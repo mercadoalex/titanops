@@ -35,6 +35,9 @@ type PlatformConfig struct {
 	CorrelationTimeWindow time.Duration
 	// ConfidenceThreshold is the minimum confidence for auto-action execution.
 	ConfidenceThreshold int
+	// DedupWindow is the deduplication window for collapsing duplicate events.
+	// Default: 5s. Set to 0 to disable.
+	DedupWindow time.Duration
 	// ExportConfig holds the telemetry export backend configuration.
 	ExportConfig export.Config
 }
@@ -46,6 +49,7 @@ func DefaultPlatformConfig() PlatformConfig {
 		ModelDir:              "/opt/titanops/models",
 		CorrelationTimeWindow: 120 * time.Second,
 		ConfidenceThreshold:   80,
+		DedupWindow:           5 * time.Second,
 		ExportConfig: export.Config{
 			Prometheus: &export.PrometheusConfig{
 				Enabled: true,
@@ -65,6 +69,13 @@ func loadConfig() PlatformConfig {
 	if dir := os.Getenv("TITANOPS_MODEL_DIR"); dir != "" {
 		cfg.ModelDir = dir
 	}
+	if dw := os.Getenv("TITANOPS_DEDUP_WINDOW"); dw != "" {
+		if d, err := time.ParseDuration(dw); err == nil {
+			cfg.DedupWindow = d
+		} else {
+			log.Printf("WARN: invalid TITANOPS_DEDUP_WINDOW %q, using default %s", dw, cfg.DedupWindow)
+		}
+	}
 
 	return cfg
 }
@@ -82,8 +93,8 @@ func main() {
 
 	// 1. Load configuration
 	cfg := loadConfig()
-	log.Printf("Config: addr=%s, models=%s, window=%s, threshold=%d",
-		cfg.HTTPAddr, cfg.ModelDir, cfg.CorrelationTimeWindow, cfg.ConfidenceThreshold)
+	log.Printf("Config: addr=%s, models=%s, window=%s, threshold=%d, dedup=%s",
+		cfg.HTTPAddr, cfg.ModelDir, cfg.CorrelationTimeWindow, cfg.ConfidenceThreshold, cfg.DedupWindow)
 
 	// 2. Create AI provider (local ONNX inference, zero cloud dependencies)
 	var aiProvider ai.Provider
@@ -117,6 +128,7 @@ func main() {
 	correlationCfg := correlation.EngineConfig{
 		TimeWindow:          cfg.CorrelationTimeWindow,
 		ConfidenceThreshold: cfg.ConfidenceThreshold,
+		DedupWindow:         cfg.DedupWindow,
 		AutoActions: []correlation.AutoActionConfig{
 			{Type: "isolate_pod", Enabled: true},
 			{Type: "alert_operator", Enabled: true},

@@ -2,7 +2,6 @@ package ollinai
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"math"
@@ -284,6 +283,7 @@ func (e *NATSEmitter) logWarn(format string, args ...any) {
 }
 
 // serializeEvent serializes an export.Event to JSON for NATS publishing.
+// Delegates to the shared pooled serializer for consistent behavior and reduced GC pressure.
 func serializeEvent(event export.Event) ([]byte, error) {
-	return json.Marshal(event)
+	return export.MarshalEvent(event)
 }
