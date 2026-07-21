@@ -39,7 +39,7 @@ eBPF (kernel observation) → AI (analysis/decision) → Autonomous Action
 | [**Tlapix**](https://github.com/mercadoalex/tlapix) 🦡 | Security | Autonomous TLS certificate lifecycle guardian — detect shadow certs, predict expiry, auto-renew | Rust · Aya · ONNX Runtime | ✅ Active |
 | [**eBeeControl**](https://github.com/mercadoalex/ebeecontrol) 🐝 | Threat | Autonomous deception engine — honeytokens, threat classification, pod isolation | Go · Tetragon · titanops-ai | ✅ Active |
 | [**Quack**](https://github.com/mercadoalex/quack) 🦆 | Performance | AI-powered container CPU scheduling via sched_ext | Go · sched_ext · ONNX | ✅ Active |
-| [**OllinAI**](https://github.com/mercadoalex/OllinAI-) 🔮 | Change Intelligence | Deployment risk scoring, DORA metrics, incident correlation, CI/CD supply chain security | Go · AWS | 🚧 Under Construction |
+| [**OllinAI**](https://github.com/mercadoalex/OllinAI-) 🔮 | Change Intelligence | AI deployment verification, risk scoring, DORA metrics, incident correlation | Go · titanops-k8s · titanops-export | ✅ Active |
 
 ---
 
@@ -203,6 +203,7 @@ The correlation of signals across kernel health, certificate security, deception
 | Deception-based threat detection | ❌ | ❌ | ❌ | ❌ | ✅ (eBeeControl) |
 | AI-driven CPU scheduling | ❌ | ❌ | ❌ | ❌ | ✅ (Quack) |
 | Cluster heartbeat + auto-remediation | ❌ | ❌ | ❌ | ❌ | ✅ (Earthworm) |
+| Deployment verification (auto-detect regressions) | ❌ | ❌ | ❌ | ❌ | ✅ (OllinAI) |
 | Deployment risk scoring + DORA | Partial | ❌ | Partial | ❌ | ✅ (OllinAI) |
 | Cross-module signal correlation | ✅ (within own data) | ✅ (within own data) | ✅ (within own data) | ❌ | ✅ (across kernel domains) |
 | Local-first AI (no cloud required) | ❌ | ❌ | ❌ | ❌ | ✅ |
