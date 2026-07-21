@@ -317,3 +317,10 @@ go run ./cmd/titanops-mcp
 - `get_honeytoken_map` — show deception coverage
 - HTTP transport option for remote access
 - Authentication for multi-tenant environments
+
+
+---
+
+## Pending Tasks
+
+- [ ] **Blog article: "Building an MCP Server for Kubernetes Autonomous Operations with Kiro"** — Deep-dive on Kiro MCP setup, stdio transport internals, how AI agents investigate K8s clusters through TitanOps. Include step-by-step Kiro configuration, example conversations, and architecture walkthrough.
