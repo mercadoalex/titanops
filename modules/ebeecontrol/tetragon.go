@@ -23,10 +23,10 @@ type TetragonKprobeEvent struct {
 
 // TetragonProcess contains process metadata from a Tetragon event.
 type TetragonProcess struct {
-	PID    int          `json:"pid"`
-	Binary string       `json:"binary"`
-	UID    int          `json:"uid"`
-	Pod    TetragonPod  `json:"pod"`
+	PID    int         `json:"pid"`
+	Binary string      `json:"binary"`
+	UID    int         `json:"uid"`
+	Pod    TetragonPod `json:"pod"`
 }
 
 // TetragonPod contains pod metadata from a Tetragon event.

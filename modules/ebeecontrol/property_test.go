@@ -189,7 +189,7 @@ func TestProperty_PublishGuardNeverPublishesWorse(t *testing.T) {
 		}, &ModelVersion{
 			VersionID:          "v1.0.0",
 			ValidationAccuracy: initialAccuracy,
-			PublishedTimestamp:  time.Now().UTC(),
+			PublishedTimestamp: time.Now().UTC(),
 		})
 		if err != nil {
 			t.Fatalf("failed to create trainer: %v", err)

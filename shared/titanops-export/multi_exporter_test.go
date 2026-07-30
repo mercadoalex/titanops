@@ -15,7 +15,7 @@ type mockBackend struct {
 	sendFn  func(ctx context.Context, event Event) error
 }
 
-func (m *mockBackend) Name() string { return m.name }
+func (m *mockBackend) Name() string    { return m.name }
 func (m *mockBackend) IsEnabled() bool { return m.enabled }
 func (m *mockBackend) Send(ctx context.Context, event Event) error {
 	if m.sendFn != nil {
@@ -32,7 +32,7 @@ type panicBackend struct {
 }
 
 func (p *panicBackend) Name() string    { return p.name }
-func (p *panicBackend) IsEnabled() bool  { return p.enabled }
+func (p *panicBackend) IsEnabled() bool { return p.enabled }
 func (p *panicBackend) Send(ctx context.Context, event Event) error {
 	panic(p.msg)
 }

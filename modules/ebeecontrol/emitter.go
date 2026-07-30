@@ -30,7 +30,7 @@ type ChannelEmitter struct {
 }
 
 // NewChannelEmitter creates an emitter that sends events to the provided channel.
-// If the channel is full, Emit blocks until space is available or context is cancelled.
+// If the channel is full, Emit blocks until space is available or context is canceled.
 func NewChannelEmitter(ch chan<- export.Event) *ChannelEmitter {
 	return &ChannelEmitter{ch: ch}
 }

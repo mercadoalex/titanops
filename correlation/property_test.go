@@ -6,17 +6,13 @@ import (
 	"testing"
 	"time"
 
-	export "github.com/mercadoalex/titanops/shared/titanops-export"
 	"pgregory.net/rapid"
+
+	export "github.com/mercadoalex/titanops/shared/titanops-export"
 )
 
 // **Validates: Requirements 5.2, 5.3, 5.4**
 // Property 7: Correlation engine generates incidents from matching cross-module events
-
-// moduleGen generates a valid TitanOps module name.
-func moduleGen() *rapid.Generator[string] {
-	return rapid.SampledFrom([]string{"earthworm", "tlapix", "ebeecontrol", "quack"})
-}
 
 // distinctModulesGen generates at least 2 distinct module names.
 func distinctModulesGen(minModules int) *rapid.Generator[[]string] {

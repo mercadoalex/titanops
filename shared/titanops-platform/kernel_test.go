@@ -13,18 +13,18 @@ import (
 // --- Mock Module ---
 
 type mockModule struct {
-	id         string
-	version    string
-	startErr   error
-	stopErr    error
-	health     HealthStatus
-	startCalls int32
-	stopCalls  int32
+	id          string
+	version     string
+	startErr    error
+	stopErr     error
+	health      HealthStatus
+	startCalls  int32
+	stopCalls   int32
 	shouldPanic bool
 }
 
 func (m *mockModule) ID() string      { return m.id }
-func (m *mockModule) Version() string  { return m.version }
+func (m *mockModule) Version() string { return m.version }
 
 func (m *mockModule) Start(_ context.Context, _ Kernel) error {
 	atomic.AddInt32(&m.startCalls, 1)

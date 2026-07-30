@@ -210,7 +210,7 @@ func TestPredict_CancelledContext(t *testing.T) {
 		Features: []float32{0.5},
 	})
 	if err == nil {
-		t.Fatal("expected error for cancelled context")
+		t.Fatal("expected error for canceled context")
 	}
 }
 

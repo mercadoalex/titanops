@@ -416,10 +416,10 @@ func handleExplainAction(args ExplainActionArgs) (*mcp.ToolResponse, error) {
 			{Type: "additional_honeytokens", Target: "production", Result: "success", Retries: 0, Duration: "450ms"},
 		},
 		Outcome: explanationOutcome{
-			ThreatContained:  true,
+			ThreatContained:     true,
 			AllActionsSucceeded: true,
-			TotalDuration:    "860ms",
-			LearningSubmitted: true,
+			TotalDuration:       "860ms",
+			LearningSubmitted:   true,
 		},
 	}
 
@@ -471,11 +471,11 @@ type deploymentVerdict struct {
 
 type signalCheck struct {
 	Signal    string  `json:"signal"`
-	Baseline float64 `json:"baseline"`
-	Current  float64 `json:"current"`
+	Baseline  float64 `json:"baseline"`
+	Current   float64 `json:"current"`
 	Threshold float64 `json:"threshold"`
-	Passed   bool    `json:"passed"`
-	Unit     string  `json:"unit"`
+	Passed    bool    `json:"passed"`
+	Unit      string  `json:"unit"`
 }
 
 type platformEvent struct {
@@ -489,13 +489,13 @@ type platformEvent struct {
 }
 
 type actionExplanation struct {
-	ActionID   string               `json:"action_id"`
-	IncidentID string               `json:"incident_id"`
-	Module     string               `json:"module"`
-	Trigger    explanationTrigger   `json:"trigger"`
-	Decision   explanationDecision  `json:"decision"`
-	Actions    []explanationAction  `json:"actions"`
-	Outcome    explanationOutcome   `json:"outcome"`
+	ActionID   string              `json:"action_id"`
+	IncidentID string              `json:"incident_id"`
+	Module     string              `json:"module"`
+	Trigger    explanationTrigger  `json:"trigger"`
+	Decision   explanationDecision `json:"decision"`
+	Actions    []explanationAction `json:"actions"`
+	Outcome    explanationOutcome  `json:"outcome"`
 }
 
 type explanationTrigger struct {

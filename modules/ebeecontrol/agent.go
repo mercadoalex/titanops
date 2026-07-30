@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	export "github.com/mercadoalex/titanops/shared/titanops-export"
 )
 
@@ -18,8 +19,8 @@ import (
 // It wires all components and runs the continuous loop:
 // Discover → Deploy → Detect → Assess → Respond → Report → Learn.
 type Agent struct {
-	config  Config
-	logger  *log.Logger
+	config Config
+	logger *log.Logger
 
 	// Components
 	dynatrace *DynatraceClient
@@ -29,8 +30,8 @@ type Agent struct {
 	emitter   EventEmitter
 
 	// Internal state
-	registry  *HoneytokenRegistry
-	auditLog  *AuditLog
+	registry *HoneytokenRegistry
+	auditLog *AuditLog
 
 	// Response executor dependencies
 	executorDeps ResponseExecutorDeps
@@ -168,10 +169,10 @@ func (a *Agent) processAccessEvent(ctx context.Context, event AccessEvent) error
 	}
 
 	assessment := ThreatAssessment{
-		AssessmentID:  uuid.New().String(),
-		AccessEventID: event.EventID,
-		Classification: classification,
-		AssessmentTime: time.Now().UTC(),
+		AssessmentID:      uuid.New().String(),
+		AccessEventID:     event.EventID,
+		Classification:    classification,
+		AssessmentTime:    time.Now().UTC(),
 		AssessmentLatency: time.Since(start),
 	}
 	if podCtx != nil {
@@ -353,14 +354,14 @@ func (a *Agent) runRetrainingScheduler(ctx context.Context) {
 // emitWorkflowEvent publishes a correlation event for the completed workflow.
 func (a *Agent) emitWorkflowEvent(ctx context.Context, event AccessEvent, assessment ThreatAssessment, result ResponseExecutionResult) {
 	payload := map[string]interface{}{
-		"access_event_id":  event.EventID,
-		"pod_id":           event.PodID,
-		"namespace":        event.Namespace,
-		"honeytoken_path":  event.HoneytokenPath,
-		"classification":   assessment.Classification,
-		"all_succeeded":    result.AllSucceeded,
-		"actions_count":    len(result.Actions),
-		"latency_ms":       assessment.AssessmentLatency.Milliseconds(),
+		"access_event_id": event.EventID,
+		"pod_id":          event.PodID,
+		"namespace":       event.Namespace,
+		"honeytoken_path": event.HoneytokenPath,
+		"classification":  assessment.Classification,
+		"all_succeeded":   result.AllSucceeded,
+		"actions_count":   len(result.Actions),
+		"latency_ms":      assessment.AssessmentLatency.Milliseconds(),
 	}
 
 	payloadBytes, err := json.Marshal(payload)

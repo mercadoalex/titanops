@@ -348,9 +348,9 @@ func (v *Verifier) emitVerdict(ctx context.Context, verdict Verdict) error {
 		Payload:   payloadBytes,
 		Namespace: verdict.Change.Namespace,
 		Labels: map[string]string{
-			"workload":  verdict.Change.WorkloadName,
-			"kind":      verdict.Change.WorkloadKind,
-			"verdict":   string(verdict.Status),
+			"workload":   verdict.Change.WorkloadName,
+			"kind":       verdict.Change.WorkloadKind,
+			"verdict":    string(verdict.Status),
 			"commit_sha": verdict.Change.CommitSHA,
 		},
 		Timestamp: verdict.CompletedAt,
@@ -377,16 +377,16 @@ func (v *Verifier) RecentVerdicts(n int) []Verdict {
 
 // VerdictPayload is the JSON payload for verdict events (for SerializePayload).
 type VerdictPayload struct {
-	VerdictID    string         `json:"verdict_id"`
-	Status       VerdictStatus  `json:"status"`
-	WorkloadName string         `json:"workload_name"`
-	WorkloadKind string         `json:"workload_kind"`
-	Namespace    string         `json:"namespace"`
-	Summary      string         `json:"summary"`
-	Checks       []SignalCheck  `json:"checks"`
-	FailedChecks []SignalCheck  `json:"failed_checks,omitempty"`
-	Duration     string         `json:"duration"`
-	CommitSHA    string         `json:"commit_sha,omitempty"`
+	VerdictID    string        `json:"verdict_id"`
+	Status       VerdictStatus `json:"status"`
+	WorkloadName string        `json:"workload_name"`
+	WorkloadKind string        `json:"workload_kind"`
+	Namespace    string        `json:"namespace"`
+	Summary      string        `json:"summary"`
+	Checks       []SignalCheck `json:"checks"`
+	FailedChecks []SignalCheck `json:"failed_checks,omitempty"`
+	Duration     string        `json:"duration"`
+	CommitSHA    string        `json:"commit_sha,omitempty"`
 }
 
 // MarshalJSON implements custom JSON serialization for Verdict to use in events.

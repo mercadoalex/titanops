@@ -10,8 +10,9 @@ import (
 	"testing"
 	"time"
 
-	export "github.com/mercadoalex/titanops/shared/titanops-export"
 	"pgregory.net/rapid"
+
+	export "github.com/mercadoalex/titanops/shared/titanops-export"
 )
 
 // uuidV4Regex matches a valid UUID v4 string.
@@ -119,8 +120,8 @@ func TestProperty3_EventMetadataPopulationAndIncompleteLabel(t *testing.T) {
 
 		// Use a mock publisher that's disconnected so events get buffered
 		emitter := NewNATSEmitter(NATSEmitterConfig{
-			Publisher:       &mockPublisher{connected: false},
-			BufferCapacity:  100,
+			Publisher:      &mockPublisher{connected: false},
+			BufferCapacity: 100,
 		})
 
 		err := emitter.Emit(context.Background(), event)
@@ -167,8 +168,8 @@ func TestProperty4_EventIDUniqueness(t *testing.T) {
 		n := rapid.IntRange(2, 100).Draw(t, "numEvents")
 
 		emitter := NewNATSEmitter(NATSEmitterConfig{
-			Publisher:       &mockPublisher{connected: false},
-			BufferCapacity:  200,
+			Publisher:      &mockPublisher{connected: false},
+			BufferCapacity: 200,
 		})
 
 		for i := 0; i < n; i++ {
@@ -270,8 +271,8 @@ func TestProperty6_RingBufferCapacityInvariant(t *testing.T) {
 		numEvents := rapid.IntRange(1, 300).Draw(t, "numEvents")
 
 		emitter := NewNATSEmitter(NATSEmitterConfig{
-			Publisher:       &mockPublisher{connected: false},
-			BufferCapacity:  capacity,
+			Publisher:      &mockPublisher{connected: false},
+			BufferCapacity: capacity,
 		})
 
 		// Track events in order of insertion
@@ -305,7 +306,7 @@ func TestProperty6_RingBufferCapacityInvariant(t *testing.T) {
 			t.Fatalf("final buffer length %d exceeds capacity %d", finalLen, capacity)
 		}
 
-		// Verify oldest-first eviction: if we pushed more than capacity, 
+		// Verify oldest-first eviction: if we pushed more than capacity,
 		// the buffer should contain exactly capacity items
 		if numEvents >= capacity {
 			if finalLen != capacity {

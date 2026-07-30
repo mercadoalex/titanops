@@ -14,12 +14,12 @@ import (
 // access event subscription, and forensic report submission
 // via the Dynatrace MCP Server API.
 type DynatraceClient struct {
-	endpointURL     string
+	endpointURL      string
 	discoveryTimeout time.Duration
-	maxRetries      int
-	contextTimeout  time.Duration
-	httpClient      HTTPClient
-	callbacks       []func(AccessEvent)
+	maxRetries       int
+	contextTimeout   time.Duration
+	httpClient       HTTPClient
+	callbacks        []func(AccessEvent)
 }
 
 // HTTPClient abstracts HTTP operations for dependency injection.

@@ -315,7 +315,7 @@ func TestCloudProvider_Predict_CancelledContext(t *testing.T) {
 		Features: []float32{0.5},
 	})
 	if err == nil {
-		t.Fatal("expected error for cancelled context")
+		t.Fatal("expected error for canceled context")
 	}
 }
 
@@ -455,7 +455,7 @@ func TestBackend_CancelledContext_Train(t *testing.T) {
 	for _, b := range backends {
 		_, err := b.Train(ctx, TrainRequest{ModuleID: "test"})
 		if err == nil {
-			t.Errorf("expected error for cancelled context with backend %T", b)
+			t.Errorf("expected error for canceled context with backend %T", b)
 		}
 	}
 }
@@ -474,7 +474,7 @@ func TestBackend_CancelledContext_Explain(t *testing.T) {
 	for _, b := range backends {
 		_, err := b.Explain(ctx, ExplainRequest{ModuleID: "test"})
 		if err == nil {
-			t.Errorf("expected error for cancelled context with backend %T", b)
+			t.Errorf("expected error for canceled context with backend %T", b)
 		}
 	}
 }

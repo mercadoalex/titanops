@@ -3,8 +3,9 @@ package testutil_test
 import (
 	"testing"
 
-	"github.com/mercadoalex/titanops/shared/titanops-config/testutil"
 	"pgregory.net/rapid"
+
+	"github.com/mercadoalex/titanops/shared/titanops-config/testutil"
 )
 
 func TestValidEventGenerator(t *testing.T) {

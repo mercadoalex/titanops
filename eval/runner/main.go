@@ -19,9 +19,10 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/mercadoalex/titanops/correlation"
 	export "github.com/mercadoalex/titanops/shared/titanops-export"
-	"gopkg.in/yaml.v3"
 )
 
 func main() {
@@ -55,13 +56,13 @@ func main() {
 
 	// Build report
 	report := EvalReport{
-		Module:     module,
-		Timestamp:  time.Now().UTC(),
-		CommitSHA:  os.Getenv("GIT_COMMIT"),
-		TotalRun:   len(results),
-		Passed:     countPassed(results),
-		Failed:     countFailed(results),
-		Scenarios:  results,
+		Module:    module,
+		Timestamp: time.Now().UTC(),
+		CommitSHA: os.Getenv("GIT_COMMIT"),
+		TotalRun:  len(results),
+		Passed:    countPassed(results),
+		Failed:    countFailed(results),
+		Scenarios: results,
 	}
 
 	reportJSON, err := json.MarshalIndent(report, "", "  ")
@@ -112,9 +113,9 @@ type EvalReport struct {
 
 // ScenarioResult captures the outcome of a single scenario execution.
 type ScenarioResult struct {
-	Name     string `json:"name"`
-	File     string `json:"file"`
-	Passed   bool   `json:"passed"`
+	Name     string   `json:"name"`
+	File     string   `json:"file"`
+	Passed   bool     `json:"passed"`
 	Failures []string `json:"failures,omitempty"`
 	// Actual values for debugging
 	ActualIncidents  int `json:"actual_incidents,omitempty"`
@@ -145,7 +146,7 @@ type CorrelationScenario struct {
 // CorrelationEventInput represents an event in a YAML scenario.
 type CorrelationEventInput struct {
 	Module    string            `yaml:"module"`
-	EventType string           `yaml:"event_type"`
+	EventType string            `yaml:"event_type"`
 	Node      string            `yaml:"node"`
 	Pod       string            `yaml:"pod"`
 	Namespace string            `yaml:"namespace"`

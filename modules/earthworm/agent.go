@@ -185,7 +185,7 @@ func (a *Agent) getAnomalyScore(ctx context.Context, heartbeat HeartbeatSignal) 
 		return a.fallbackToRules(heartbeat)
 	}
 
-	// Context cancelled by caller.
+	// Context canceled by caller.
 	if errors.Is(err, context.Canceled) {
 		return 0, false, err
 	}
@@ -289,10 +289,10 @@ func (a *Agent) emitActionEvent(ctx context.Context, result *ActionResult) error
 		Node:      result.NodeID,
 		EventID:   fmt.Sprintf("ew-%d", result.Timestamp.UnixNano()),
 		Labels: map[string]string{
-			"action_type":  result.ActionType,
-			"confidence":   fmt.Sprintf("%.4f", result.Confidence),
-			"rule_based":   fmt.Sprintf("%v", result.WasRuleBased),
-			"node_id":      result.NodeID,
+			"action_type": result.ActionType,
+			"confidence":  fmt.Sprintf("%.4f", result.Confidence),
+			"rule_based":  fmt.Sprintf("%v", result.WasRuleBased),
+			"node_id":     result.NodeID,
 		},
 	}
 

@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	export "github.com/mercadoalex/titanops/shared/titanops-export"
 	"pgregory.net/rapid"
+
+	export "github.com/mercadoalex/titanops/shared/titanops-export"
 )
 
 // --- Property: Change Classification Always Has Valid Severity ---

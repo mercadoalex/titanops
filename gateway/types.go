@@ -68,11 +68,11 @@ type DeploymentRiskEntry struct {
 
 // DORAMetrics represents the current DORA metrics from OllinAI.
 type DORAMetrics struct {
-	DeploymentFrequency  float64 `json:"deployment_frequency"`
-	LeadTimeForChanges   float64 `json:"lead_time_for_changes"`
-	ChangeFailureRate    float64 `json:"change_failure_rate"`
-	MeanTimeToRecovery   float64 `json:"mean_time_to_recovery"`
-	UpdatedAt            string  `json:"updated_at"`
+	DeploymentFrequency float64 `json:"deployment_frequency"`
+	LeadTimeForChanges  float64 `json:"lead_time_for_changes"`
+	ChangeFailureRate   float64 `json:"change_failure_rate"`
+	MeanTimeToRecovery  float64 `json:"mean_time_to_recovery"`
+	UpdatedAt           string  `json:"updated_at"`
 }
 
 // OllinAIResponse is the response payload for the GET /api/ollinai endpoint.

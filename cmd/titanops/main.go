@@ -2,8 +2,8 @@
 // all platform components: the correlation engine, API gateway, export adapters,
 // and AI provider. This demonstrates the integration architecture where:
 //
-//   modules → event bus → correlation engine → export adapters
-//   correlation engine → API gateway → dashboard
+//	modules → event bus → correlation engine → export adapters
+//	correlation engine → API gateway → dashboard
 //
 // The cmd package imports everything; nothing imports cmd (one-way dependency direction).
 package main
@@ -19,12 +19,12 @@ import (
 	"syscall"
 	"time"
 
-	config "github.com/mercadoalex/titanops/shared/titanops-config"
 	"github.com/mercadoalex/titanops/correlation"
 	"github.com/mercadoalex/titanops/gateway"
 	"github.com/mercadoalex/titanops/modules/earthworm"
 	"github.com/mercadoalex/titanops/modules/ebeecontrol"
 	ai "github.com/mercadoalex/titanops/shared/titanops-ai"
+	config "github.com/mercadoalex/titanops/shared/titanops-config"
 	export "github.com/mercadoalex/titanops/shared/titanops-export"
 	platform "github.com/mercadoalex/titanops/shared/titanops-platform"
 )
@@ -313,36 +313,36 @@ func createExporter(cfg export.Config) export.Exporter {
 
 type prometheusBackend struct{ port int }
 
-func (b *prometheusBackend) Name() string                                    { return "prometheus" }
-func (b *prometheusBackend) Send(_ context.Context, _ export.Event) error    { return nil }
-func (b *prometheusBackend) IsEnabled() bool                                 { return true }
+func (b *prometheusBackend) Name() string                                 { return "prometheus" }
+func (b *prometheusBackend) Send(_ context.Context, _ export.Event) error { return nil }
+func (b *prometheusBackend) IsEnabled() bool                              { return true }
 
 type otlpBackend struct{ endpoint string }
 
-func (b *otlpBackend) Name() string                                    { return "otlp" }
-func (b *otlpBackend) Send(_ context.Context, _ export.Event) error    { return nil }
-func (b *otlpBackend) IsEnabled() bool                                 { return true }
+func (b *otlpBackend) Name() string                                 { return "otlp" }
+func (b *otlpBackend) Send(_ context.Context, _ export.Event) error { return nil }
+func (b *otlpBackend) IsEnabled() bool                              { return true }
 
 type splunkBackend struct{ hecURL string }
 
-func (b *splunkBackend) Name() string                                    { return "splunk" }
-func (b *splunkBackend) Send(_ context.Context, _ export.Event) error    { return nil }
-func (b *splunkBackend) IsEnabled() bool                                 { return true }
+func (b *splunkBackend) Name() string                                 { return "splunk" }
+func (b *splunkBackend) Send(_ context.Context, _ export.Event) error { return nil }
+func (b *splunkBackend) IsEnabled() bool                              { return true }
 
 type dynatraceBackend struct{ apiURL string }
 
-func (b *dynatraceBackend) Name() string                                    { return "dynatrace" }
-func (b *dynatraceBackend) Send(_ context.Context, _ export.Event) error    { return nil }
-func (b *dynatraceBackend) IsEnabled() bool                                 { return true }
+func (b *dynatraceBackend) Name() string                                 { return "dynatrace" }
+func (b *dynatraceBackend) Send(_ context.Context, _ export.Event) error { return nil }
+func (b *dynatraceBackend) IsEnabled() bool                              { return true }
 
 type webhookBackend struct {
 	endpoint string
 	events   []string
 }
 
-func (b *webhookBackend) Name() string                                    { return "webhook" }
-func (b *webhookBackend) Send(_ context.Context, _ export.Event) error    { return nil }
-func (b *webhookBackend) IsEnabled() bool                                 { return true }
+func (b *webhookBackend) Name() string                                 { return "webhook" }
+func (b *webhookBackend) Send(_ context.Context, _ export.Event) error { return nil }
+func (b *webhookBackend) IsEnabled() bool                              { return true }
 
 // noOpBackend is a sink that discards all events. Used in mock mode.
 type noOpBackend struct{ name string }

@@ -18,25 +18,25 @@ type TrainerConfig struct {
 
 // ModelVersion represents a trained model version with its metadata.
 type ModelVersion struct {
-	VersionID          string    `json:"version_id"`
-	TrainingDatasetSize int      `json:"training_dataset_size"`
-	ValidationAccuracy float64   `json:"validation_accuracy"` // percentage 0-100
+	VersionID           string    `json:"version_id"`
+	TrainingDatasetSize int       `json:"training_dataset_size"`
+	ValidationAccuracy  float64   `json:"validation_accuracy"` // percentage 0-100
 	PublishedTimestamp  time.Time `json:"published_timestamp"`
 }
 
 // TrainingStatus reports the current state of the training pipeline.
 type TrainingStatus struct {
 	LastRetrainingTimestamp      time.Time     `json:"last_retraining_timestamp"`
-	NextScheduledRetraining     time.Time     `json:"next_scheduled_retraining"`
-	DatasetSizeSinceLastTraining int          `json:"dataset_size_since_last_training"`
-	MinimumRecordsRequired      int           `json:"minimum_records_required"`
-	RetrainingInterval          time.Duration `json:"retraining_interval"`
+	NextScheduledRetraining      time.Time     `json:"next_scheduled_retraining"`
+	DatasetSizeSinceLastTraining int           `json:"dataset_size_since_last_training"`
+	MinimumRecordsRequired       int           `json:"minimum_records_required"`
+	RetrainingInterval           time.Duration `json:"retraining_interval"`
 }
 
 // IngestionConfirmation is returned after successful outcome data ingestion.
 type IngestionConfirmation struct {
-	DatasetEntryCount   int       `json:"dataset_entry_count"`
-	IngestionTimestamp  time.Time `json:"ingestion_timestamp"`
+	DatasetEntryCount  int       `json:"dataset_entry_count"`
+	IngestionTimestamp time.Time `json:"ingestion_timestamp"`
 }
 
 // RetrainingResult contains the outcome of a retraining attempt.
@@ -74,7 +74,7 @@ type Trainer struct {
 	currentModel             ModelVersion
 	outcomeDataset           []OutcomeData
 	datasetSinceLastTraining int
-	lastRetrainingTimestamp   time.Time
+	lastRetrainingTimestamp  time.Time
 	logs                     []TrainingLogEntry
 }
 
@@ -89,9 +89,9 @@ func NewTrainer(cfg TrainerConfig, initialModel *ModelVersion) (*Trainer, error)
 	}
 
 	model := ModelVersion{
-		VersionID:          "v1.0.0",
+		VersionID:           "v1.0.0",
 		TrainingDatasetSize: 0,
-		ValidationAccuracy: 75,
+		ValidationAccuracy:  75,
 		PublishedTimestamp:  time.Now().UTC(),
 	}
 	if initialModel != nil {
@@ -99,8 +99,8 @@ func NewTrainer(cfg TrainerConfig, initialModel *ModelVersion) (*Trainer, error)
 	}
 
 	return &Trainer{
-		config:                 cfg,
-		currentModel:           model,
+		config:                  cfg,
+		currentModel:            model,
 		lastRetrainingTimestamp: model.PublishedTimestamp,
 	}, nil
 }
@@ -147,10 +147,10 @@ func (t *Trainer) GetTrainingStatus() TrainingStatus {
 
 	return TrainingStatus{
 		LastRetrainingTimestamp:      t.lastRetrainingTimestamp,
-		NextScheduledRetraining:     nextRetraining,
+		NextScheduledRetraining:      nextRetraining,
 		DatasetSizeSinceLastTraining: t.datasetSinceLastTraining,
-		MinimumRecordsRequired:      t.config.MinimumOutcomeRecords,
-		RetrainingInterval:          t.config.RetrainingInterval,
+		MinimumRecordsRequired:       t.config.MinimumOutcomeRecords,
+		RetrainingInterval:           t.config.RetrainingInterval,
 	}
 }
 
@@ -200,9 +200,9 @@ func (t *Trainer) TriggerRetraining() RetrainingResult {
 	// Model Publish Guard: publish only if new accuracy >= current.
 	if newAccuracy >= currentAccuracy {
 		newModel := ModelVersion{
-			VersionID:          t.generateVersionID(),
+			VersionID:           t.generateVersionID(),
 			TrainingDatasetSize: len(t.outcomeDataset),
-			ValidationAccuracy: newAccuracy,
+			ValidationAccuracy:  newAccuracy,
 			PublishedTimestamp:  time.Now().UTC(),
 		}
 

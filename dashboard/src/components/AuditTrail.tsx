@@ -95,7 +95,12 @@ export function AuditTrail() {
       )}
       {loading && <p>Loading...</p>}
 
-      <div className="audit-table-container" role="region" aria-label="Audit trail entries" tabIndex={0}>
+      <div
+        className="audit-table-container"
+        role="region"
+        aria-label="Audit trail entries"
+        tabIndex={0}
+      >
         <table className="audit-table">
           <thead>
             <tr>
@@ -135,11 +140,7 @@ export function AuditTrail() {
           ← Previous
         </button>
         <span>Page {filter.page ?? 1}</span>
-        <button
-          type="button"
-          onClick={handleNextPage}
-          disabled={entries.length < PAGE_SIZE}
-        >
+        <button type="button" onClick={handleNextPage} disabled={entries.length < PAGE_SIZE}>
           Next →
         </button>
       </nav>

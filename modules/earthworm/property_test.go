@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"pgregory.net/rapid"
+
 	ai "github.com/mercadoalex/titanops/shared/titanops-ai"
 	export "github.com/mercadoalex/titanops/shared/titanops-export"
 	k8s "github.com/mercadoalex/titanops/shared/titanops-k8s"
-	"pgregory.net/rapid"
 )
 
 // **Validates: Requirements 10.1, 10.2, 10.6**

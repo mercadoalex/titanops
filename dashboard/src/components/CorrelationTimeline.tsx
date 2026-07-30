@@ -19,8 +19,7 @@ export function CorrelationTimeline() {
           setError(null);
         }
       } catch (err) {
-        if (active)
-          setError(err instanceof Error ? err.message : 'Failed to fetch correlations');
+        if (active) setError(err instanceof Error ? err.message : 'Failed to fetch correlations');
       }
     }
 
@@ -62,9 +61,7 @@ export function CorrelationTimeline() {
           <li key={incident.incident_id} className="correlation-item">
             <header className="correlation-header">
               <span className="correlation-id">{incident.incident_id.slice(0, 8)}</span>
-              <span className="correlation-confidence">
-                Confidence: {incident.confidence}%
-              </span>
+              <span className="correlation-confidence">Confidence: {incident.confidence}%</span>
               <time dateTime={incident.detected_at}>
                 {new Date(incident.detected_at).toLocaleString()}
               </time>
@@ -101,9 +98,7 @@ export function CorrelationTimeline() {
                 </li>
               ))}
             </ul>
-            <p className="matched-attrs">
-              Matched: {incident.matched_attributes.join(', ')}
-            </p>
+            <p className="matched-attrs">Matched: {incident.matched_attributes.join(', ')}</p>
             {incident.action_taken && (
               <p className="correlation-action">
                 Action taken — outcome: {incident.action_outcome ?? 'unknown'}

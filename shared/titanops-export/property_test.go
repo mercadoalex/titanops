@@ -55,8 +55,8 @@ type pbtMockBackend struct {
 	sendCount atomic.Int64
 }
 
-func (m *pbtMockBackend) Name() string      { return m.name }
-func (m *pbtMockBackend) IsEnabled() bool    { return m.enabled }
+func (m *pbtMockBackend) Name() string    { return m.name }
+func (m *pbtMockBackend) IsEnabled() bool { return m.enabled }
 func (m *pbtMockBackend) Send(_ context.Context, _ Event) error {
 	m.sendCount.Add(1)
 	return m.failErr

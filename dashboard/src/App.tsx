@@ -77,10 +77,7 @@ export function App() {
         {view === 'actions' && (
           <div className="actions-layout">
             <ActionsFeed onSelectAction={setSelectedActionId} />
-            <ExplainView
-              actionId={selectedActionId}
-              onClose={() => setSelectedActionId(null)}
-            />
+            <ExplainView actionId={selectedActionId} onClose={() => setSelectedActionId(null)} />
           </div>
         )}
         {view === 'correlations' && <CorrelationTimeline />}

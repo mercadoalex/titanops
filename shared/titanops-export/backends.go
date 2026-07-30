@@ -114,14 +114,14 @@ func (o *OTLPBackend) Send(_ context.Context, event Event) error {
 
 // otlpLogRecord represents an OTLP log record in JSON format.
 type otlpLogRecord struct {
-	TimeUnixNano         int64             `json:"timeUnixNano"`
-	SeverityNumber       int               `json:"severityNumber"`
-	SeverityText         string            `json:"severityText"`
-	Body                 string            `json:"body"`
-	Attributes           []otlpKeyValue    `json:"attributes"`
-	Resource             otlpResource      `json:"resource"`
-	TraceID              string            `json:"traceId,omitempty"`
-	SpanID               string            `json:"spanId,omitempty"`
+	TimeUnixNano   int64          `json:"timeUnixNano"`
+	SeverityNumber int            `json:"severityNumber"`
+	SeverityText   string         `json:"severityText"`
+	Body           string         `json:"body"`
+	Attributes     []otlpKeyValue `json:"attributes"`
+	Resource       otlpResource   `json:"resource"`
+	TraceID        string         `json:"traceId,omitempty"`
+	SpanID         string         `json:"spanId,omitempty"`
 }
 
 type otlpKeyValue struct {

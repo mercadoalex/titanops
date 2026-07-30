@@ -116,10 +116,10 @@ func (m *MockAPIClient) FetchDORAMetrics(ctx context.Context) (*DORAMetrics, err
 	}
 
 	return &DORAMetrics{
-		DeploymentFrequency:  m.rng.Float64() * 10,        // 0-10 deploys/day
-		LeadTimeForChanges:   m.rng.Float64() * 72,        // 0-72 hours
-		ChangeFailureRate:    m.rng.Float64() * 0.5,       // 0-50%
-		TimeToRestoreService: m.rng.Float64()*4 + 0.1,     // 0.1-4.1 hours
+		DeploymentFrequency:  m.rng.Float64() * 10,    // 0-10 deploys/day
+		LeadTimeForChanges:   m.rng.Float64() * 72,    // 0-72 hours
+		ChangeFailureRate:    m.rng.Float64() * 0.5,   // 0-50%
+		TimeToRestoreService: m.rng.Float64()*4 + 0.1, // 0.1-4.1 hours
 	}, nil
 }
 

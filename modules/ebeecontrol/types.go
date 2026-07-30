@@ -47,10 +47,10 @@ const (
 type ActionType string
 
 const (
-	ActionPodIsolation        ActionType = "pod_isolation"
-	ActionIPBlock             ActionType = "ip_block"
+	ActionPodIsolation          ActionType = "pod_isolation"
+	ActionIPBlock               ActionType = "ip_block"
 	ActionAdditionalHoneytokens ActionType = "additional_honeytokens"
-	ActionAlert               ActionType = "alert"
+	ActionAlert                 ActionType = "alert"
 )
 
 // ActionResult represents the outcome of a response action.
@@ -84,15 +84,15 @@ const (
 // AccessEvent represents a kernel-level file access event detected by Tetragon.
 // Generated when a process performs an operation on a deployed honeytoken path.
 type AccessEvent struct {
-	EventID          string     `json:"event_id"`
-	ProcessID        int        `json:"process_id"`
-	ProcessBinaryPath string   `json:"process_binary_path"`
-	UserID           int        `json:"user_id"`
-	PodID            string     `json:"pod_id"`
-	Namespace        string     `json:"namespace"`
-	HoneytokenPath   string     `json:"honeytoken_path"`
-	AccessType       AccessType `json:"access_type"`
-	Timestamp        time.Time  `json:"timestamp"`
+	EventID           string     `json:"event_id"`
+	ProcessID         int        `json:"process_id"`
+	ProcessBinaryPath string     `json:"process_binary_path"`
+	UserID            int        `json:"user_id"`
+	PodID             string     `json:"pod_id"`
+	Namespace         string     `json:"namespace"`
+	HoneytokenPath    string     `json:"honeytoken_path"`
+	AccessType        AccessType `json:"access_type"`
+	Timestamp         time.Time  `json:"timestamp"`
 }
 
 // HighRiskService is a Kubernetes service identified by Dynatrace as having
@@ -110,8 +110,8 @@ type HighRiskService struct {
 type PodContext struct {
 	Namespace               string                  `json:"namespace"`
 	NamespaceClassification NamespaceClassification `json:"namespace_classification"`
-	ServiceCriticality      int                     `json:"service_criticality"`   // 1-5
-	DavisAnomalyScore       float64                 `json:"davis_anomaly_score"`   // 0.0-1.0
+	ServiceCriticality      int                     `json:"service_criticality"`    // 1-5
+	DavisAnomalyScore       float64                 `json:"davis_anomaly_score"`    // 0.0-1.0
 	AnomalyWindowMinutes    int                     `json:"anomaly_window_minutes"` // default 10
 }
 
@@ -141,7 +141,7 @@ type HoneytokenRegistryEntry struct {
 	FilePath            string           `json:"file_path"`
 	DeploymentTimestamp time.Time        `json:"deployment_timestamp"`
 	Status              HoneytokenStatus `json:"status"`
-	LastAccessTimestamp  *time.Time       `json:"last_access_timestamp,omitempty"`
+	LastAccessTimestamp *time.Time       `json:"last_access_timestamp,omitempty"`
 	AccessCount         int              `json:"access_count"`
 }
 
@@ -158,15 +158,15 @@ type ResponseAction struct {
 
 // ForensicReport is a structured forensic report generated after a threat response.
 type ForensicReport struct {
-	ReportID            string              `json:"report_id"`
-	GenerationTimestamp time.Time           `json:"generation_timestamp"`
-	TriggeringEventID   string              `json:"triggering_access_event_id"`
-	RetentionDays       int                 `json:"retention_days"`
-	AccessEventDetails  ForensicAccessEvent `json:"access_event_details"`
-	ContextualAssessment ForensicAssessment `json:"contextual_assessment"`
-	ResponseActions     []ForensicAction    `json:"response_actions"`
-	Timeline            []TimelineEntry     `json:"timeline"`
-	RecommendedActions  []string            `json:"recommended_follow_up_actions"`
+	ReportID             string              `json:"report_id"`
+	GenerationTimestamp  time.Time           `json:"generation_timestamp"`
+	TriggeringEventID    string              `json:"triggering_access_event_id"`
+	RetentionDays        int                 `json:"retention_days"`
+	AccessEventDetails   ForensicAccessEvent `json:"access_event_details"`
+	ContextualAssessment ForensicAssessment  `json:"contextual_assessment"`
+	ResponseActions      []ForensicAction    `json:"response_actions"`
+	Timeline             []TimelineEntry     `json:"timeline"`
+	RecommendedActions   []string            `json:"recommended_follow_up_actions"`
 }
 
 // ForensicAccessEvent contains access event details within a forensic report.
@@ -203,22 +203,22 @@ type TimelineEntry struct {
 
 // AuditLogEntry records an autonomous decision for accountability.
 type AuditLogEntry struct {
-	EntryID          string       `json:"entry_id"`
-	Timestamp        time.Time    `json:"timestamp"`
-	DecisionType     DecisionType `json:"decision_type"`
-	DecisionRationale string     `json:"decision_rationale"`
-	InputDataSummary string       `json:"input_data_summary"`
-	Outcome          string       `json:"outcome"`
-	RetentionDays    int          `json:"retention_days"`
+	EntryID           string       `json:"entry_id"`
+	Timestamp         time.Time    `json:"timestamp"`
+	DecisionType      DecisionType `json:"decision_type"`
+	DecisionRationale string       `json:"decision_rationale"`
+	InputDataSummary  string       `json:"input_data_summary"`
+	Outcome           string       `json:"outcome"`
+	RetentionDays     int          `json:"retention_days"`
 }
 
 // PlacementModel represents a trained placement optimization model.
 type PlacementModel struct {
-	VersionID          string    `json:"version_id"`
-	TrainingDatasetSize int      `json:"training_dataset_size"`
-	ValidationAccuracy float64   `json:"validation_accuracy"` // percentage 0-100
+	VersionID           string    `json:"version_id"`
+	TrainingDatasetSize int       `json:"training_dataset_size"`
+	ValidationAccuracy  float64   `json:"validation_accuracy"` // percentage 0-100
 	PublishedTimestamp  time.Time `json:"published_timestamp"`
-	ModelArtifactURI   string    `json:"model_artifact_uri"`
+	ModelArtifactURI    string    `json:"model_artifact_uri"`
 }
 
 // OutcomeData is submitted to the AI trainer after a threat response sequence.
@@ -241,8 +241,8 @@ type Effectiveness struct {
 
 // DeploymentRequest specifies a honeytoken deployment to a pod.
 type DeploymentRequest struct {
-	PodID       string          `json:"pod_id"`
-	Namespace   string          `json:"namespace"`
+	PodID       string           `json:"pod_id"`
+	Namespace   string           `json:"namespace"`
 	Honeytokens []HoneytokenSpec `json:"honeytokens"`
 }
 
@@ -256,9 +256,9 @@ type HoneytokenSpec struct {
 
 // DeploymentResponse contains the results of a deployment request.
 type DeploymentResponse struct {
-	Success             bool               `json:"success"`
+	Success             bool                 `json:"success"`
 	DeployedHoneytokens []DeployedHoneytoken `json:"deployed_honeytokens"`
-	Errors              []DeploymentError  `json:"errors"`
+	Errors              []DeploymentError    `json:"errors"`
 }
 
 // DeployedHoneytoken records a successfully deployed honeytoken.

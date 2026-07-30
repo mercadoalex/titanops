@@ -69,9 +69,7 @@ export function ExplainView({ actionId, onClose }: ExplainViewProps) {
             <dd>{detail.trigger_event}</dd>
             <dt>Timestamp</dt>
             <dd>
-              <time dateTime={detail.timestamp}>
-                {new Date(detail.timestamp).toLocaleString()}
-              </time>
+              <time dateTime={detail.timestamp}>{new Date(detail.timestamp).toLocaleString()}</time>
             </dd>
           </dl>
 

@@ -62,11 +62,11 @@ func (m *mockEmitter) getEvents() []export.Event {
 
 // mockK8sClient implements k8s.Client for testing.
 type mockK8sClient struct {
-	pods         []k8s.PodInfo
+	pods          []k8s.PodInfo
 	cordonedNodes []string
 	restartedPods []string
 	deletedPods   []string
-	err          error
+	err           error
 }
 
 func (m *mockK8sClient) ReadSecret(ctx context.Context, namespace, name, key string) ([]byte, error) {
@@ -719,7 +719,7 @@ func TestProcessHeartbeat_ContextCancelled_ReturnsError(t *testing.T) {
 
 	_, err := agent.ProcessHeartbeat(context.Background(), heartbeat)
 	if err == nil {
-		t.Fatal("expected error for cancelled context")
+		t.Fatal("expected error for canceled context")
 	}
 }
 

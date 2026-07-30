@@ -93,7 +93,7 @@ func NewDeploymentWatcher(cfg DeploymentWatcherConfig) *DeploymentWatcher {
 	}
 }
 
-// Start begins the watch loop. Blocks until ctx is cancelled.
+// Start begins the watch loop. Blocks until ctx is canceled.
 func (w *DeploymentWatcher) Start(ctx context.Context) error {
 	// Take initial snapshot (baseline — no changes emitted for existing state).
 	if err := w.captureBaseline(ctx); err != nil {

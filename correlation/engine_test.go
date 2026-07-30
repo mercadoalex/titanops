@@ -504,17 +504,17 @@ func TestEngine_ContextCancellation(t *testing.T) {
 	// All operations should respect context cancellation.
 	err = engine.Ingest(ctx, export.Event{})
 	if err == nil {
-		t.Error("expected error from Ingest with cancelled context")
+		t.Error("expected error from Ingest with canceled context")
 	}
 
 	_, err = engine.Correlate(ctx)
 	if err == nil {
-		t.Error("expected error from Correlate with cancelled context")
+		t.Error("expected error from Correlate with canceled context")
 	}
 
 	_, err = engine.GetIncidents(ctx, IncidentFilter{})
 	if err == nil {
-		t.Error("expected error from GetIncidents with cancelled context")
+		t.Error("expected error from GetIncidents with canceled context")
 	}
 }
 

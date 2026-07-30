@@ -62,18 +62,7 @@ func (c *HTTPAPIClient) FetchDeploymentRisks(ctx context.Context) ([]DeploymentR
 
 	entries := make([]DeploymentRiskEntry, len(raw))
 	for i, r := range raw {
-		entries[i] = DeploymentRiskEntry{
-			Service:     r.Service,
-			CommitSHA:   r.CommitSHA,
-			Deployer:    r.Deployer,
-			RiskScore:   r.RiskScore,
-			RiskFactors: r.RiskFactors,
-			PipelineID:  r.PipelineID,
-			Environment: r.Environment,
-			Node:        r.Node,
-			Pod:         r.Pod,
-			Namespace:   r.Namespace,
-		}
+		entries[i] = DeploymentRiskEntry(r)
 	}
 
 	return entries, nil

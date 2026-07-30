@@ -1,0 +1,112 @@
+# golangci-lint v2 configuration for TitanOps
+# Docs: https://golangci-lint.run/usage/configuration/
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+formatters:
+  enable:
+    - goimports
+
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/mercadoalex/titanops
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - misspell
+    - unconvert
+    - gosec
+    - nilerr
+
+  settings:
+    errcheck:
+      exclude-functions:
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (net/http.ResponseWriter).Write
+        - (*encoding/json.Encoder).Encode
+        - fmt.Fprintf
+        - fmt.Fprint
+        - fmt.Fprintln
+
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+        - shadow
+
+    staticcheck:
+      checks:
+        - all
+        - -QF1012
+        - -ST1005
+        - -ST1022
+        - -SA5011
+
+    gosec:
+      excludes:
+        - G104
+        - G115
+        - G301
+        - G304
+        - G306
+        - G404
+        - G706
+        - G101
+
+    misspell:
+      locale: US
+
+  exclusions:
+    rules:
+      # Test files get relaxed rules
+      - path: _test\.go
+        linters:
+          - errcheck
+          - gosec
+          - unparam
+          - nilerr
+
+      # testutil/ — test helper generators
+      - path: testutil/
+        linters:
+          - gosec
+
+      # cmd/ entry points
+      - path: cmd/
+        linters:
+          - errcheck
+          - gosec
+
+      # eval/ runner — utility tool
+      - path: eval/
+        linters:
+          - gosec
+          - errcheck
+
+      # mock files
+      - path: mock
+        linters:
+          - gosec
+
+      # nilerr in config loader — intentional graceful degradation
+      - path: shared/titanops-config/loader\.go
+        linters:
+          - nilerr
+
+      # govet inline suggestions
+      - text: "inline:"
+        linters:
+          - govet
+
+issues:
+  max-same-issues: 0

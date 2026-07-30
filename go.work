@@ -6,6 +6,7 @@ use (
 	./correlation
 	./eval/runner
 	./gateway
+	./integrations/alertmanager
 	./modules/earthworm
 	./modules/ebeecontrol
 	./modules/ollinai

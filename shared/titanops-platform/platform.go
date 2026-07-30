@@ -35,7 +35,7 @@ type Module interface {
 
 	// Start initializes the module and begins its operation.
 	// The kernel is provided for access to shared services.
-	// The context is cancelled when the platform is shutting down.
+	// The context is canceled when the platform is shutting down.
 	Start(ctx context.Context, kernel Kernel) error
 
 	// Stop gracefully shuts down the module.

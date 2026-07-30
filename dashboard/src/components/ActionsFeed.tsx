@@ -34,9 +34,7 @@ export function ActionsFeed({ onSelectAction }: ActionsFeedProps) {
     };
   }, []);
 
-  const filteredActions = moduleFilter
-    ? actions.filter((a) => a.module === moduleFilter)
-    : actions;
+  const filteredActions = moduleFilter ? actions.filter((a) => a.module === moduleFilter) : actions;
 
   return (
     <section aria-labelledby="actions-feed-heading">
@@ -71,12 +69,8 @@ export function ActionsFeed({ onSelectAction }: ActionsFeedProps) {
             <header className="action-header">
               <strong>{action.module}</strong>
               <span className="action-type">{action.action_type}</span>
-              <span className={`action-outcome outcome-${action.outcome}`}>
-                {action.outcome}
-              </span>
-              <time dateTime={action.timestamp}>
-                {new Date(action.timestamp).toLocaleString()}
-              </time>
+              <span className={`action-outcome outcome-${action.outcome}`}>{action.outcome}</span>
+              <time dateTime={action.timestamp}>{new Date(action.timestamp).toLocaleString()}</time>
             </header>
             <dl className="reasoning-chain">
               <dt>Observation</dt>
@@ -86,9 +80,7 @@ export function ActionsFeed({ onSelectAction }: ActionsFeedProps) {
               <dt>Action</dt>
               <dd>{action.reasoning.action}</dd>
             </dl>
-            <p className="action-confidence">
-              Confidence: {(action.confidence * 100).toFixed(1)}%
-            </p>
+            <p className="action-confidence">Confidence: {(action.confidence * 100).toFixed(1)}%</p>
             {onSelectAction && (
               <button
                 type="button"

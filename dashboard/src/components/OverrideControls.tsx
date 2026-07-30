@@ -82,12 +82,7 @@ export function OverrideControls({ actionId, moduleId }: OverrideControlsProps) 
           >
             {submitting ? 'Submitting...' : 'Confirm'}
           </button>
-          <button
-            type="button"
-            onClick={handleCancel}
-            disabled={submitting}
-            className="btn-cancel"
-          >
+          <button type="button" onClick={handleCancel} disabled={submitting} className="btn-cancel">
             Cancel
           </button>
         </div>
