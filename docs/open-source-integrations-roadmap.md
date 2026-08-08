@@ -19,6 +19,8 @@
 
 **Recomendación:** Empezar por el 1 (AlertManager receiver) y el 2 (publicar MCP server). Son los de menor esfuerzo con mayor alcance. El AlertManager receiver convierte a TitanOps en algo que cualquier equipo de SRE puede probar en 5 minutos sin cambiar nada de su stack.
 
+> **⚠️ PREREQUISITO: [Phase 0 — Testing & Validación Sustentable](#phase-0-testing--validación-sustentable-prioridad-máxima)** debe completarse antes de continuar con nuevas integraciones. Sin un entorno de pruebas no podemos validar que lo que construimos funciona. Ver detalles al final de este documento.
+
 ---
 
 ## 1. AlertManager Receiver
@@ -339,3 +341,94 @@ No estamos haciendo castillos en el aire. El orden correcto es:
 - [ ] Al menos el AlertManager receiver y K8s Event watcher funcionando en producción
 - [ ] README y docs orientados a la comunidad
 - [ ] Clarity total en el messaging: "K8sGPT explains. TitanOps acts."
+
+---
+
+## Phase 0: Testing & Validación Sustentable (PRIORIDAD MÁXIMA)
+
+> Sin un entorno de pruebas no podemos validar nada. Esta fase es prerequisito para todas las demás.
+> Documentación completa: [testing-validation-strategy.md](testing-validation-strategy.md)
+
+### El Problema
+
+TitanOps necesita un cluster K8s con aplicaciones corriendo y generando señales (alertas, eventos, métricas, crashes) para probar que la correlación y las acciones autónomas funcionan. Sin datos reales, construimos a ciegas.
+
+### Estrategia: 4 Capas (de $0 a $15/mes)
+
+| Capa | Qué | Costo | Frecuencia |
+|------|-----|-------|------------|
+| 1 | Unit tests + mocks + eval runner YAML | $0 | Cada commit |
+| 2 | Eval runner expandido (integration scenarios con fixtures) | $0 | Cada PR |
+| 3 | Cluster `kind` local + app demo + generador de caos | $0 | Semanal |
+| 4 | EKS real con Spot Instances (2-3 días/mes, destroy después) | ~$10-15/mes | Pre-release |
+
+### Entregables
+
+| # | Entregable | Esfuerzo | Impacto |
+|---|---|---|---|
+| 0.1 | Setup `kind` + scripts (`make localdev-up/down`) | 1 día | Habilita testing local sin costo |
+| 0.2 | App demo "payments-demo" (3 microservicios que generan señales) | 1 día | Genera datos reales para correlación |
+| 0.3 | Prometheus + AlertManager minimal en cluster local | 0.5 día | Alimenta AlertManager receiver |
+| 0.4 | Generador de caos configurable (pod crash, OOM, alert storm, deploy fail) | 1 día | Escenarios reproducibles de incidentes |
+| 0.5 | Testdata fixtures reales (payloads de AlertManager, Falco, ArgoCD, K8s Events) | 1 día | Testing offline de mappers |
+| 0.6 | Sistema capture/replay de señales | 1 día | Graba señales una vez, reproduce infinitas |
+| 0.7 | CI job con `kind` para integration tests | 1 día | Regression automática en PRs |
+| 0.8 | Terraform optimizado (Spot Instances, t3.medium, budget alerts) | 0.5 día | EKS real por <$15/mes |
+
+### Orden de Ejecución
+
+**Sprint 0 — Semana 0 (antes de cualquier integración nueva)**
+
+| Día | Tarea |
+|-----|-------|
+| L | 0.1 — kind cluster + scripts de setup/teardown |
+| M | 0.2 — App demo payments-demo (api + worker + db) |
+| M | 0.3 — Prometheus + AlertManager local |
+| J | 0.4 — Generador de caos (3 escenarios base) |
+| V | 0.5 — Testdata fixtures + end-to-end validation |
+
+**Sprint 0.5 — Semana 1**
+
+| Día | Tarea |
+|-----|-------|
+| L | 0.6 — Capture/replay system |
+| M | 0.7 — CI job con kind |
+| M | 0.8 — Terraform optimizado para validación mensual |
+
+### Estructura de Código
+
+```
+scripts/localdev/
+├── kind-config.yaml              # Cluster 3 nodos
+├── setup.sh                      # make localdev-up
+├── teardown.sh                   # make localdev-down
+├── demo-app/
+│   ├── Dockerfile
+│   ├── deployment.yaml           # payments-api, payments-worker, payments-db
+│   └── main.go                   # Genera tráfico, errores, OOMs configurables
+├── chaos/
+│   ├── scenarios/
+│   │   ├── deploy-broke-prod.yaml
+│   │   ├── cascade-failure.yaml
+│   │   ├── alert-storm.yaml
+│   │   └── security-breach.yaml
+│   └── runner.sh                 # Ejecuta escenarios de caos
+└── monitoring/
+    ├── prometheus-values.yaml
+    └── alertmanager-config.yaml  # Alertas apuntando a TitanOps
+```
+
+### Notas Importantes
+
+- **Earthworm (eBPF) y Quack (sched_ext) NO funcionan en kind** — requieren kernel real. Se testean con mocks localmente, se validan solo en EKS (Capa 4).
+- **Los receivers de integraciones SÍ funcionan 100% en kind** — no dependen del kernel.
+- **El correlation engine es pure logic** — funciona sin cluster alguno.
+- **Spot Instances + terraform destroy** entre sesiones = EKS real por ~$10-15/mes en vez de $200-400/mes.
+
+### Criterio de Éxito
+
+- [ ] `make localdev-up` levanta cluster + app + monitoring en <5 minutos
+- [ ] `make localdev-chaos scenario=deploy-broke-prod` genera un incidente correlado
+- [ ] TitanOps desplegado en kind produce al menos 1 correlación válida sin intervención manual
+- [ ] CI corre integration tests en kind en <10 minutos
+- [ ] Cluster EKS se enciende y destruye con un solo comando, costo mensual <$20
